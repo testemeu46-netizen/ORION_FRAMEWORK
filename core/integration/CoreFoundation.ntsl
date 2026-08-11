@@ -1,1 +1,111 @@
+const
+    ORION_CORE_VERSION_MAJOR = 1;
+    ORION_CORE_VERSION_MINOR = 0;
+    ORION_CORE_VERSION_PATCH = 0;
+    ORION_CORE_BUILD = 1;
 
+input
+    CoreEnabled(True);
+    CoreDebug(False);
+
+var
+    CF_Initialized : Boolean;
+    CF_Ready : Boolean;
+    CF_Error : Boolean;
+
+    CF_CurrentBar : Integer;
+    CF_LastBar : Integer;
+    CF_Cycle : Integer;
+
+    CF_BootstrapReady : Boolean;
+    CF_KernelReady : Boolean;
+    CF_ConfigurationReady : Boolean;
+    CF_RegistryReady : Boolean;
+
+    CF_DiagnosticsReady : Boolean;
+    CF_EventBusReady : Boolean;
+    CF_ModuleManagerReady : Boolean;
+    CF_ServiceLocatorReady : Boolean;
+
+    CF_ComponentsReady : Integer;
+
+begin
+
+    if not CF_Initialized then
+    begin
+        CF_Initialized := True;
+
+        CF_Ready := False;
+        CF_Error := False;
+
+        CF_CurrentBar := CurrentBar;
+        CF_LastBar := CurrentBar;
+        CF_Cycle := 0;
+
+        CF_BootstrapReady := True;
+        CF_KernelReady := True;
+        CF_ConfigurationReady := True;
+        CF_RegistryReady := True;
+
+        CF_DiagnosticsReady := True;
+        CF_EventBusReady := True;
+        CF_ModuleManagerReady := True;
+        CF_ServiceLocatorReady := True;
+
+        CF_ComponentsReady := 0;
+    end;
+
+    CF_CurrentBar := CurrentBar;
+
+    if CoreEnabled then
+    begin
+
+        if CF_CurrentBar <> CF_LastBar then
+        begin
+            CF_Cycle := CF_Cycle + 1;
+            CF_LastBar := CF_CurrentBar;
+        end;
+
+        CF_ComponentsReady := 0;
+
+        if CF_BootstrapReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_KernelReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_ConfigurationReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_RegistryReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_DiagnosticsReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_EventBusReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_ModuleManagerReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_ServiceLocatorReady then
+            CF_ComponentsReady := CF_ComponentsReady + 1;
+
+        if CF_ComponentsReady = 8 then
+            CF_Ready := True
+        else
+            CF_Ready := False;
+
+    end
+    else
+    begin
+        CF_Ready := False;
+    end;
+
+    if CoreDebug then
+    begin
+        Plot(CF_ComponentsReady);
+    end;
+
+end;
