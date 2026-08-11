@@ -1,1 +1,63 @@
+const
+    ORION_EVENTBUS_VERSION_MAJOR = 1;
+    ORION_EVENTBUS_VERSION_MINOR = 0;
+    ORION_EVENTBUS_VERSION_PATCH = 0;
+    ORION_EVENTBUS_BUILD = 1;
 
+input
+    EventBusEnabled(True);
+    EventBusDebug(False);
+
+var
+    EV_Initialized : Boolean;
+    EV_Ready : Boolean;
+    EV_Error : Boolean;
+
+    EV_CurrentBar : Integer;
+    EV_LastBar : Integer;
+    EV_Cycle : Integer;
+
+    EV_EventCount : Integer;
+    EV_LastEvent : Integer;
+
+begin
+
+    if not EV_Initialized then
+    begin
+        EV_Initialized := True;
+        EV_Ready := False;
+        EV_Error := False;
+
+        EV_CurrentBar := CurrentBar;
+        EV_LastBar := CurrentBar;
+        EV_Cycle := 0;
+
+        EV_EventCount := 0;
+        EV_LastEvent := 0;
+    end;
+
+    EV_CurrentBar := CurrentBar;
+
+    if EventBusEnabled then
+    begin
+        if EV_CurrentBar <> EV_LastBar then
+        begin
+            EV_Cycle := EV_Cycle + 1;
+            EV_EventCount := EV_EventCount + 1;
+            EV_LastEvent := EV_EventCount;
+            EV_LastBar := EV_CurrentBar;
+        end;
+
+        EV_Ready := True;
+    end
+    else
+    begin
+        EV_Ready := False;
+    end;
+
+    if EventBusDebug then
+    begin
+        Plot(EV_EventCount);
+    end;
+
+end;
