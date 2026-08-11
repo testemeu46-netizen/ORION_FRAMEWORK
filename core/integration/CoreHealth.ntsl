@@ -1,1 +1,111 @@
+const
+    ORION_COREHEALTH_VERSION_MAJOR = 1;
+    ORION_COREHEALTH_VERSION_MINOR = 0;
+    ORION_COREHEALTH_VERSION_PATCH = 0;
+    ORION_COREHEALTH_BUILD = 1;
 
+input
+    CoreHealthEnabled(True);
+    CoreHealthDebug(False);
+
+var
+    CH_Initialized : Boolean;
+    CH_Ready : Boolean;
+    CH_Healthy : Boolean;
+    CH_Error : Boolean;
+    CH_Warning : Boolean;
+
+    CH_CurrentBar : Integer;
+    CH_LastBar : Integer;
+    CH_Cycle : Integer;
+
+    CH_ComponentCount : Integer;
+    CH_ActiveComponents : Integer;
+    CH_FailedComponents : Integer;
+
+    CH_HealthScore : Integer;
+    CH_State : Integer;
+
+begin
+
+    if not CH_Initialized then
+    begin
+        CH_Initialized := True;
+
+        CH_Ready := False;
+        CH_Healthy := False;
+        CH_Error := False;
+        CH_Warning := False;
+
+        CH_CurrentBar := CurrentBar;
+        CH_LastBar := CurrentBar;
+        CH_Cycle := 0;
+
+        CH_ComponentCount := 8;
+        CH_ActiveComponents := 0;
+        CH_FailedComponents := 0;
+
+        CH_HealthScore := 0;
+        CH_State := 0;
+    end;
+
+    CH_CurrentBar := CurrentBar;
+
+    if CoreHealthEnabled then
+    begin
+
+        if CH_CurrentBar <> CH_LastBar then
+        begin
+            CH_Cycle := CH_Cycle + 1;
+            CH_LastBar := CH_CurrentBar;
+        end;
+
+        CH_ActiveComponents := CH_ComponentCount - CH_FailedComponents;
+
+        if CH_ComponentCount > 0 then
+        begin
+            CH_HealthScore :=
+                (CH_ActiveComponents * 100) / CH_ComponentCount;
+        end
+        else
+        begin
+            CH_HealthScore := 0;
+        end;
+
+        if CH_FailedComponents = 0 then
+        begin
+            CH_Healthy := True;
+            CH_Error := False;
+            CH_Warning := False;
+            CH_State := 2;
+        end
+        else
+        begin
+            CH_Healthy := False;
+            CH_Warning := True;
+            CH_State := 1;
+        end;
+
+        if CH_HealthScore = 100 then
+        begin
+            CH_Ready := True;
+        end
+        else
+        begin
+            CH_Ready := False;
+        end;
+
+    end
+    else
+    begin
+        CH_Ready := False;
+        CH_Healthy := False;
+        CH_State := 0;
+    end;
+
+    if CoreHealthDebug then
+    begin
+        Plot(CH_HealthScore);
+    end;
+
+end;
