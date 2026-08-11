@@ -1,1 +1,53 @@
+const
+    ORION_VERSION_MAJOR = 1;
+    ORION_VERSION_MINOR = 0;
+    ORION_VERSION_PATCH = 0;
+    ORION_BUILD = 1;
 
+input
+    DebugMode(False);
+
+var
+    KS_Initialized : Boolean;
+    KS_Running : Boolean;
+    KS_CurrentBar : Integer;
+    KS_LastBar : Integer;
+
+    FW_Heartbeat : Integer;
+    FW_Ready : Boolean;
+    FW_Error : Boolean;
+
+begin
+
+    if not KS_Initialized then
+    begin
+        KS_Initialized := True;
+        KS_Running := True;
+
+        KS_CurrentBar := CurrentBar;
+        KS_LastBar := CurrentBar;
+
+        FW_Heartbeat := 0;
+        FW_Ready := True;
+        FW_Error := False;
+    end;
+
+    KS_CurrentBar := CurrentBar;
+
+    if KS_CurrentBar <> KS_LastBar then
+    begin
+        FW_Heartbeat := FW_Heartbeat + 1;
+        KS_LastBar := KS_CurrentBar;
+    end;
+
+    if KS_Running then
+    begin
+        FW_Ready := True;
+    end;
+
+    if DebugMode then
+    begin
+        Plot(FW_Heartbeat);
+    end;
+
+end;
