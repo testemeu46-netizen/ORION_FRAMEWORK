@@ -1,1 +1,60 @@
+const
+    ORION_KERNEL_VERSION_MAJOR = 1;
+    ORION_KERNEL_VERSION_MINOR = 0;
+    ORION_KERNEL_VERSION_PATCH = 0;
+    ORION_KERNEL_BUILD = 1;
 
+input
+    KernelEnabled(True);
+    KernelDebug(False);
+
+var
+    KR_Initialized : Boolean;
+    KR_Running : Boolean;
+    KR_Ready : Boolean;
+    KR_Error : Boolean;
+
+    KR_CurrentBar : Integer;
+    KR_LastBar : Integer;
+    KR_Cycle : Integer;
+
+begin
+
+    if not KR_Initialized then
+    begin
+        KR_Initialized := True;
+        KR_Running := False;
+        KR_Ready := False;
+        KR_Error := False;
+
+        KR_CurrentBar := CurrentBar;
+        KR_LastBar := CurrentBar;
+        KR_Cycle := 0;
+    end;
+
+    KR_CurrentBar := CurrentBar;
+
+    if KernelEnabled then
+    begin
+        KR_Running := True;
+
+        if KR_CurrentBar <> KR_LastBar then
+        begin
+            KR_Cycle := KR_Cycle + 1;
+            KR_LastBar := KR_CurrentBar;
+        end;
+
+        KR_Ready := True;
+    end
+    else
+    begin
+        KR_Running := False;
+        KR_Ready := False;
+    end;
+
+    if KernelDebug then
+    begin
+        Plot(KR_Cycle);
+    end;
+
+end;
