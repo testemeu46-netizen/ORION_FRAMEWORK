@@ -1,1 +1,70 @@
+const
+    ORION_REGISTRY_VERSION_MAJOR = 1;
+    ORION_REGISTRY_VERSION_MINOR = 0;
+    ORION_REGISTRY_VERSION_PATCH = 0;
+    ORION_REGISTRY_BUILD = 1;
 
+input
+    RegistryEnabled(True);
+    RegistryDebug(False);
+
+var
+    RG_Initialized : Boolean;
+    RG_Ready : Boolean;
+    RG_Error : Boolean;
+
+    RG_CurrentBar : Integer;
+    RG_LastBar : Integer;
+    RG_Cycle : Integer;
+
+    RG_Entries : Integer;
+    RG_Active : Integer;
+
+begin
+
+    if not RG_Initialized then
+    begin
+        RG_Initialized := True;
+        RG_Ready := False;
+        RG_Error := False;
+
+        RG_CurrentBar := CurrentBar;
+        RG_LastBar := CurrentBar;
+        RG_Cycle := 0;
+
+        RG_Entries := 0;
+        RG_Active := 0;
+    end;
+
+    RG_CurrentBar := CurrentBar;
+
+    if RegistryEnabled then
+    begin
+        if RG_CurrentBar <> RG_LastBar then
+        begin
+            RG_Cycle := RG_Cycle + 1;
+            RG_LastBar := RG_CurrentBar;
+        end;
+
+        RG_Ready := True;
+    end
+    else
+    begin
+        RG_Ready := False;
+    end;
+
+    if RG_Ready then
+    begin
+        RG_Active := RG_Entries;
+    end
+    else
+    begin
+        RG_Active := 0;
+    end;
+
+    if RegistryDebug then
+    begin
+        Plot(RG_Cycle);
+    end;
+
+end;
