@@ -1,1 +1,74 @@
+const
+    ORION_SERVICELOCATOR_VERSION_MAJOR = 1;
+    ORION_SERVICELOCATOR_VERSION_MINOR = 0;
+    ORION_SERVICELOCATOR_VERSION_PATCH = 0;
+    ORION_SERVICELOCATOR_BUILD = 1;
 
+input
+    ServiceLocatorEnabled(True);
+    ServiceLocatorDebug(False);
+
+var
+    SL_Initialized : Boolean;
+    SL_Ready : Boolean;
+    SL_Error : Boolean;
+
+    SL_CurrentBar : Integer;
+    SL_LastBar : Integer;
+    SL_Cycle : Integer;
+
+    SL_ServiceCount : Integer;
+    SL_ActiveServices : Integer;
+    SL_LastState : Integer;
+
+begin
+
+    if not SL_Initialized then
+    begin
+        SL_Initialized := True;
+        SL_Ready := False;
+        SL_Error := False;
+
+        SL_CurrentBar := CurrentBar;
+        SL_LastBar := CurrentBar;
+        SL_Cycle := 0;
+
+        SL_ServiceCount := 0;
+        SL_ActiveServices := 0;
+        SL_LastState := 0;
+    end;
+
+    SL_CurrentBar := CurrentBar;
+
+    if ServiceLocatorEnabled then
+    begin
+        if SL_CurrentBar <> SL_LastBar then
+        begin
+            SL_Cycle := SL_Cycle + 1;
+            SL_LastBar := SL_CurrentBar;
+        end;
+
+        SL_Ready := True;
+        SL_LastState := 1;
+    end
+    else
+    begin
+        SL_Ready := False;
+        SL_LastState := 0;
+    end;
+
+    if SL_Ready then
+    begin
+        SL_ActiveServices := SL_ServiceCount;
+    end
+    else
+    begin
+        SL_ActiveServices := 0;
+    end;
+
+    if ServiceLocatorDebug then
+    begin
+        Plot(SL_Cycle);
+    end;
+
+end;
