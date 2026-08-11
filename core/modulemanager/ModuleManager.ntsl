@@ -1,1 +1,74 @@
+const
+    ORION_MODULEMANAGER_VERSION_MAJOR = 1;
+    ORION_MODULEMANAGER_VERSION_MINOR = 0;
+    ORION_MODULEMANAGER_VERSION_PATCH = 0;
+    ORION_MODULEMANAGER_BUILD = 1;
 
+input
+    ModuleManagerEnabled(True);
+    ModuleManagerDebug(False);
+
+var
+    MM_Initialized : Boolean;
+    MM_Ready : Boolean;
+    MM_Error : Boolean;
+
+    MM_CurrentBar : Integer;
+    MM_LastBar : Integer;
+    MM_Cycle : Integer;
+
+    MM_ModuleCount : Integer;
+    MM_ActiveModules : Integer;
+    MM_LastState : Integer;
+
+begin
+
+    if not MM_Initialized then
+    begin
+        MM_Initialized := True;
+        MM_Ready := False;
+        MM_Error := False;
+
+        MM_CurrentBar := CurrentBar;
+        MM_LastBar := CurrentBar;
+        MM_Cycle := 0;
+
+        MM_ModuleCount := 0;
+        MM_ActiveModules := 0;
+        MM_LastState := 0;
+    end;
+
+    MM_CurrentBar := CurrentBar;
+
+    if ModuleManagerEnabled then
+    begin
+        if MM_CurrentBar <> MM_LastBar then
+        begin
+            MM_Cycle := MM_Cycle + 1;
+            MM_LastBar := MM_CurrentBar;
+        end;
+
+        MM_Ready := True;
+        MM_LastState := 1;
+    end
+    else
+    begin
+        MM_Ready := False;
+        MM_LastState := 0;
+    end;
+
+    if MM_Ready then
+    begin
+        MM_ActiveModules := MM_ModuleCount;
+    end
+    else
+    begin
+        MM_ActiveModules := 0;
+    end;
+
+    if ModuleManagerDebug then
+    begin
+        Plot(MM_Cycle);
+    end;
+
+end;
