@@ -1,1 +1,55 @@
+const
+    ORION_CONFIG_VERSION_MAJOR = 1;
+    ORION_CONFIG_VERSION_MINOR = 0;
+    ORION_CONFIG_VERSION_PATCH = 0;
+    ORION_CONFIG_BUILD = 1;
 
+input
+    ConfigEnabled(True);
+    ConfigDebug(False);
+
+var
+    CFG_Initialized : Boolean;
+    CFG_Ready : Boolean;
+    CFG_Error : Boolean;
+
+    CFG_CurrentBar : Integer;
+    CFG_LastBar : Integer;
+    CFG_Cycle : Integer;
+
+begin
+
+    if not CFG_Initialized then
+    begin
+        CFG_Initialized := True;
+        CFG_Ready := False;
+        CFG_Error := False;
+
+        CFG_CurrentBar := CurrentBar;
+        CFG_LastBar := CurrentBar;
+        CFG_Cycle := 0;
+    end;
+
+    CFG_CurrentBar := CurrentBar;
+
+    if ConfigEnabled then
+    begin
+        if CFG_CurrentBar <> CFG_LastBar then
+        begin
+            CFG_Cycle := CFG_Cycle + 1;
+            CFG_LastBar := CFG_CurrentBar;
+        end;
+
+        CFG_Ready := True;
+    end
+    else
+    begin
+        CFG_Ready := False;
+    end;
+
+    if ConfigDebug then
+    begin
+        Plot(CFG_Cycle);
+    end;
+
+end;
