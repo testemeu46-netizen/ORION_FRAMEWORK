@@ -1,1 +1,96 @@
+const
+    ORION_CORESTATE_VERSION_MAJOR = 1;
+    ORION_CORESTATE_VERSION_MINOR = 0;
+    ORION_CORESTATE_VERSION_PATCH = 0;
+    ORION_CORESTATE_BUILD = 1;
 
+input
+    CoreStateEnabled(True);
+    CoreStateDebug(False);
+
+var
+    CS_Initialized : Boolean;
+    CS_Ready : Boolean;
+    CS_Running : Boolean;
+    CS_Error : Boolean;
+
+    CS_CurrentBar : Integer;
+    CS_LastBar : Integer;
+    CS_Cycle : Integer;
+
+    CS_State : Integer;
+    CS_ComponentCount : Integer;
+    CS_ActiveComponents : Integer;
+    CS_Transitions : Integer;
+
+begin
+
+    if not CS_Initialized then
+    begin
+        CS_Initialized := True;
+
+        CS_Ready := False;
+        CS_Running := False;
+        CS_Error := False;
+
+        CS_CurrentBar := CurrentBar;
+        CS_LastBar := CurrentBar;
+        CS_Cycle := 0;
+
+        CS_State := 0;
+        CS_ComponentCount := 0;
+        CS_ActiveComponents := 0;
+        CS_Transitions := 0;
+    end;
+
+    CS_CurrentBar := CurrentBar;
+
+    if CoreStateEnabled then
+    begin
+
+        if CS_CurrentBar <> CS_LastBar then
+        begin
+            CS_Cycle := CS_Cycle + 1;
+            CS_LastBar := CS_CurrentBar;
+        end;
+
+        if CS_State = 0 then
+        begin
+            CS_State := 1;
+            CS_Transitions := CS_Transitions + 1;
+        end;
+
+        if CS_State = 1 then
+        begin
+            CS_ComponentCount := 8;
+            CS_ActiveComponents := CS_ComponentCount;
+
+            CS_State := 2;
+            CS_Transitions := CS_Transitions + 1;
+        end;
+
+        if CS_State = 2 then
+        begin
+            if CS_ActiveComponents = CS_ComponentCount then
+            begin
+                CS_Ready := True;
+                CS_Running := True;
+                CS_State := 3;
+                CS_Transitions := CS_Transitions + 1;
+            end;
+        end;
+
+    end
+    else
+    begin
+        CS_Ready := False;
+        CS_Running := False;
+        CS_State := 5;
+    end;
+
+    if CoreStateDebug then
+    begin
+        Plot(CS_State);
+    end;
+
+end;
