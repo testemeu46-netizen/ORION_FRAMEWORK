@@ -1,1 +1,90 @@
+const
+    ORION_LIFECYCLE_VERSION_MAJOR = 1;
+    ORION_LIFECYCLE_VERSION_MINOR = 0;
+    ORION_LIFECYCLE_VERSION_PATCH = 0;
+    ORION_LIFECYCLE_BUILD = 1;
 
+input
+    LifecycleEnabled(True);
+    LifecycleDebug(False);
+
+var
+    LC_Initialized : Boolean;
+    LC_Ready : Boolean;
+    LC_Running : Boolean;
+    LC_Error : Boolean;
+
+    LC_CurrentBar : Integer;
+    LC_LastBar : Integer;
+    LC_Cycle : Integer;
+
+    LC_State : Integer;
+    LC_Transitions : Integer;
+
+begin
+
+    if not LC_Initialized then
+    begin
+        LC_Initialized := True;
+
+        LC_Ready := False;
+        LC_Running := False;
+        LC_Error := False;
+
+        LC_CurrentBar := CurrentBar;
+        LC_LastBar := CurrentBar;
+        LC_Cycle := 0;
+
+        LC_State := 0;
+        LC_Transitions := 0;
+    end;
+
+    LC_CurrentBar := CurrentBar;
+
+    if LifecycleEnabled then
+    begin
+
+        if LC_CurrentBar <> LC_LastBar then
+        begin
+            LC_Cycle := LC_Cycle + 1;
+            LC_LastBar := LC_CurrentBar;
+        end;
+
+        if LC_State = 0 then
+        begin
+            LC_State := 1;
+            LC_Transitions := LC_Transitions + 1;
+        end;
+
+        if LC_State = 1 then
+        begin
+            LC_State := 2;
+            LC_Transitions := LC_Transitions + 1;
+        end;
+
+        if LC_State = 2 then
+        begin
+            LC_State := 3;
+            LC_Transitions := LC_Transitions + 1;
+        end;
+
+        if LC_State = 3 then
+        begin
+            LC_Ready := True;
+            LC_Running := True;
+        end;
+
+    end
+    else
+    begin
+        LC_Ready := False;
+        LC_Running := False;
+        LC_State := 5;
+    end;
+
+    if LifecycleDebug then
+    begin
+        Plot(LC_State);
+    end;
+
+end;
