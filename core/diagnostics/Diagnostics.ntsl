@@ -1,1 +1,65 @@
+const
+    ORION_DIAGNOSTICS_VERSION_MAJOR = 1;
+    ORION_DIAGNOSTICS_VERSION_MINOR = 0;
+    ORION_DIAGNOSTICS_VERSION_PATCH = 0;
+    ORION_DIAGNOSTICS_BUILD = 1;
 
+input
+    DiagnosticsEnabled(True);
+    DiagnosticsDebug(False);
+
+var
+    DG_Initialized : Boolean;
+    DG_Ready : Boolean;
+    DG_Error : Boolean;
+    DG_Warning : Boolean;
+
+    DG_CurrentBar : Integer;
+    DG_LastBar : Integer;
+    DG_Cycle : Integer;
+    DG_EventCount : Integer;
+
+begin
+
+    if not DG_Initialized then
+    begin
+        DG_Initialized := True;
+        DG_Ready := False;
+        DG_Error := False;
+        DG_Warning := False;
+
+        DG_CurrentBar := CurrentBar;
+        DG_LastBar := CurrentBar;
+        DG_Cycle := 0;
+        DG_EventCount := 0;
+    end;
+
+    DG_CurrentBar := CurrentBar;
+
+    if DiagnosticsEnabled then
+    begin
+        if DG_CurrentBar <> DG_LastBar then
+        begin
+            DG_Cycle := DG_Cycle + 1;
+            DG_EventCount := DG_EventCount + 1;
+            DG_LastBar := DG_CurrentBar;
+        end;
+
+        DG_Ready := True;
+    end
+    else
+    begin
+        DG_Ready := False;
+    end;
+
+    if DG_Ready then
+    begin
+        DG_Warning := False;
+    end;
+
+    if DiagnosticsDebug then
+    begin
+        Plot(DG_Cycle);
+    end;
+
+end;
