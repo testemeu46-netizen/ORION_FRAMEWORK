@@ -1,1 +1,130 @@
+const
+    ORION_ENTRYGUARD_VERSION_MAJOR = 1;
+    ORION_ENTRYGUARD_VERSION_MINOR = 0;
+    ORION_ENTRYGUARD_VERSION_PATCH = 0;
+    ORION_ENTRYGUARD_BUILD = 1;
 
+input
+    EntryGuardEnabled(True);
+    EntryGuardDebug(False);
+
+var
+    EG_Initialized : Boolean;
+    EG_Ready : Boolean;
+    EG_Error : Boolean;
+
+    EG_CurrentBar : Integer;
+    EG_LastBar : Integer;
+    EG_Cycle : Integer;
+
+    EG_Signal : Integer;
+    EG_LastSignal : Integer;
+
+    EG_Position : Integer;
+    EG_EntryAllowed : Boolean;
+    EG_DuplicateBlocked : Boolean;
+
+    EG_EntryCycle : Integer;
+    EG_State : Integer;
+
+    EG_ExecutionAllowed : Boolean;
+
+begin
+
+    if not EG_Initialized then
+    begin
+        EG_Initialized := True;
+
+        EG_Ready := False;
+        EG_Error := False;
+
+        EG_CurrentBar := CurrentBar;
+        EG_LastBar := CurrentBar;
+        EG_Cycle := 0;
+
+        EG_Signal := 0;
+        EG_LastSignal := 0;
+
+        EG_Position := 0;
+        EG_EntryAllowed := False;
+        EG_DuplicateBlocked := False;
+
+        EG_EntryCycle := -1;
+        EG_State := 0;
+
+        EG_ExecutionAllowed := False;
+    end;
+
+    EG_CurrentBar := CurrentBar;
+
+    if EntryGuardEnabled then
+    begin
+
+        if EG_CurrentBar <> EG_LastBar then
+        begin
+            EG_Cycle := EG_Cycle + 1;
+            EG_LastBar := EG_CurrentBar;
+        end;
+
+        EG_EntryAllowed := False;
+        EG_DuplicateBlocked := False;
+
+        if EG_Position = 0 then
+        begin
+
+            if EG_Signal <> 0 then
+            begin
+
+                if EG_EntryCycle = EG_Cycle then
+                begin
+                    if EG_LastSignal = EG_Signal then
+                    begin
+                        EG_DuplicateBlocked := True;
+                    end;
+                end;
+
+                if not EG_DuplicateBlocked then
+                begin
+                    EG_EntryAllowed := True;
+                    EG_EntryCycle := EG_Cycle;
+                    EG_LastSignal := EG_Signal;
+                    EG_State := 1;
+                end
+                else
+                begin
+                    EG_EntryAllowed := False;
+                    EG_State := 2;
+                end;
+
+            end
+            else
+            begin
+                EG_State := 0;
+            end;
+
+        end
+        else
+        begin
+            EG_EntryAllowed := False;
+            EG_State := 2;
+        end;
+
+        EG_Ready := True;
+        EG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EG_Ready := False;
+        EG_EntryAllowed := False;
+        EG_DuplicateBlocked := False;
+        EG_State := 0;
+        EG_ExecutionAllowed := False;
+    end;
+
+    if EntryGuardDebug then
+    begin
+        Plot(EG_State);
+    end;
+
+end;
