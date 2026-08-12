@@ -2,7 +2,7 @@ const
     ORION_DIRECTION_VERSION_MAJOR = 1;
     ORION_DIRECTION_VERSION_MINOR = 0;
     ORION_DIRECTION_VERSION_PATCH = 0;
-    ORION_DIRECTION_BUILD = 1;
+    ORION_DIRECTION_BUILD = 2;
 
 input
     DirectionGuardEnabled(True);
@@ -130,11 +130,6 @@ begin
 
             DG_DecisionAllowed := True;
             DG_EntryAllowed := True;
-
-            /*
-               Execução permanece deliberadamente bloqueada
-               durante a fase de testes.
-            */
             DG_ExecutionAllowed := False;
 
             DG_State := 1;
