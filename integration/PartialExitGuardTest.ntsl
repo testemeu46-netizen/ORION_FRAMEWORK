@@ -1,1 +1,147 @@
+const
+    ORION_PARTIALEXIT_VERSION_MAJOR = 1;
+    ORION_PARTIALEXIT_VERSION_MINOR = 0;
+    ORION_PARTIALEXIT_VERSION_PATCH = 0;
+    ORION_PARTIALEXIT_VERSION_BUILD = 1;
 
+input
+    PartialExitGuardEnabled(True);
+    PartialExitGuardDebug(False);
+
+    PE_TotalContracts(3);
+    PE_PartialContracts(2);
+
+var
+    PE_Initialized : Boolean;
+    PE_Ready : Boolean;
+    PE_Error : Boolean;
+    PE_Blocked : Boolean;
+
+    PE_Total : Integer;
+    PE_Partial : Integer;
+    PE_Remaining : Integer;
+
+    PE_TotalValid : Boolean;
+    PE_PartialValid : Boolean;
+    PE_RemainingValid : Boolean;
+    PE_PartialApproved : Boolean;
+
+    PE_DecisionAllowed : Boolean;
+    PE_ExitAllowed : Boolean;
+    PE_ExecutionAllowed : Boolean;
+
+    PE_State : Integer;
+
+begin
+
+    if not PE_Initialized then
+    begin
+        PE_Initialized := True;
+
+        PE_Ready := False;
+        PE_Error := False;
+        PE_Blocked := False;
+
+        PE_Total := PE_TotalContracts;
+        PE_Partial := PE_PartialContracts;
+        PE_Remaining := 0;
+
+        PE_TotalValid := False;
+        PE_PartialValid := False;
+        PE_RemainingValid := False;
+        PE_PartialApproved := False;
+
+        PE_DecisionAllowed := False;
+        PE_ExitAllowed := False;
+        PE_ExecutionAllowed := False;
+
+        PE_State := 0;
+    end;
+
+    if PartialExitGuardEnabled then
+    begin
+
+        PE_Error := False;
+        PE_Blocked := False;
+
+        PE_Total := PE_TotalContracts;
+        PE_Partial := PE_PartialContracts;
+
+        PE_TotalValid := False;
+        PE_PartialValid := False;
+        PE_RemainingValid := False;
+        PE_PartialApproved := False;
+
+        if PE_Total > 0 then
+        begin
+            PE_TotalValid := True;
+        end;
+
+        if PE_Partial > 0 then
+        begin
+            if PE_Partial < PE_Total then
+            begin
+                PE_PartialValid := True;
+            end;
+        end;
+
+        if PE_TotalValid and PE_PartialValid then
+        begin
+            PE_Remaining := PE_Total - PE_Partial;
+
+            if PE_Remaining > 0 then
+            begin
+                PE_RemainingValid := True;
+            end;
+        end;
+
+        if PE_TotalValid and PE_PartialValid then
+        begin
+            if PE_RemainingValid then
+            begin
+                PE_PartialApproved := True;
+            end;
+        end;
+
+        if PE_PartialApproved then
+        begin
+            PE_DecisionAllowed := True;
+            PE_ExitAllowed := True;
+            PE_Blocked := False;
+
+            PE_State := 1;
+        end
+        else
+        begin
+            PE_Error := True;
+            PE_Blocked := True;
+
+            PE_DecisionAllowed := False;
+            PE_ExitAllowed := False;
+
+            PE_State := 2;
+        end;
+
+        PE_Ready := True;
+
+        PE_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        PE_Ready := False;
+        PE_Blocked := True;
+
+        PE_DecisionAllowed := False;
+        PE_ExitAllowed := False;
+        PE_ExecutionAllowed := False;
+
+        PE_State := 2;
+    end;
+
+    if PartialExitGuardDebug then
+    begin
+        Plot(PE_State);
+    end;
+
+end;
