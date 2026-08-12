@@ -1,1 +1,148 @@
+const
+    ORION_ORDERRISK_VERSION_MAJOR = 1;
+    ORION_ORDERRISK_VERSION_MINOR = 0;
+    ORION_ORDERRISK_VERSION_PATCH = 0;
+    ORION_ORDERRISK_VERSION_BUILD = 1;
 
+input
+    OrderRiskGuardEnabled(True);
+    OrderRiskGuardDebug(False);
+
+    OR_MinContracts(1);
+    OR_MaxContracts(3);
+    OR_MaxRiskPoints(300);
+
+var
+    OR_Initialized : Boolean;
+    OR_Ready : Boolean;
+    OR_Error : Boolean;
+    OR_Blocked : Boolean;
+
+    OR_Direction : Integer;
+    OR_Contracts : Integer;
+    OR_RiskPoints : Float;
+
+    OR_DirectionValid : Boolean;
+    OR_ContractsValid : Boolean;
+    OR_RiskValid : Boolean;
+    OR_RiskApproved : Boolean;
+
+    OR_DecisionAllowed : Boolean;
+    OR_EntryAllowed : Boolean;
+    OR_ExecutionAllowed : Boolean;
+
+    OR_State : Integer;
+
+begin
+
+    if not OR_Initialized then
+    begin
+        OR_Initialized := True;
+
+        OR_Ready := False;
+        OR_Error := False;
+        OR_Blocked := False;
+
+        OR_Direction := 0;
+        OR_Contracts := 0;
+        OR_RiskPoints := 0;
+
+        OR_DirectionValid := False;
+        OR_ContractsValid := False;
+        OR_RiskValid := False;
+        OR_RiskApproved := False;
+
+        OR_DecisionAllowed := False;
+        OR_EntryAllowed := False;
+        OR_ExecutionAllowed := False;
+
+        OR_State := 0;
+    end;
+
+    if OrderRiskGuardEnabled then
+    begin
+
+        OR_Error := False;
+        OR_Blocked := False;
+
+        OR_DirectionValid := False;
+        OR_ContractsValid := False;
+        OR_RiskValid := False;
+        OR_RiskApproved := False;
+
+        if OR_Direction >= -1 then
+        begin
+            if OR_Direction <= 1 then
+            begin
+                if OR_Direction <> 0 then
+                begin
+                    OR_DirectionValid := True;
+                end;
+            end;
+        end;
+
+        if OR_Contracts >= OR_MinContracts then
+        begin
+            if OR_Contracts <= OR_MaxContracts then
+            begin
+                OR_ContractsValid := True;
+            end;
+        end;
+
+        if OR_RiskPoints >= 0 then
+        begin
+            if OR_RiskPoints <= OR_MaxRiskPoints then
+            begin
+                OR_RiskValid := True;
+            end;
+        end;
+
+        if OR_DirectionValid and OR_ContractsValid then
+        begin
+            if OR_RiskValid then
+            begin
+                OR_RiskApproved := True;
+            end;
+        end;
+
+        if OR_RiskApproved then
+        begin
+            OR_DecisionAllowed := True;
+            OR_EntryAllowed := True;
+            OR_Blocked := False;
+            OR_State := 1;
+        end
+        else
+        begin
+            OR_Error := True;
+            OR_Blocked := True;
+
+            OR_DecisionAllowed := False;
+            OR_EntryAllowed := False;
+
+            OR_State := 2;
+        end;
+
+        OR_Ready := True;
+
+        OR_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        OR_Ready := False;
+        OR_Blocked := True;
+
+        OR_DecisionAllowed := False;
+        OR_EntryAllowed := False;
+        OR_ExecutionAllowed := False;
+
+        OR_State := 2;
+    end;
+
+    if OrderRiskGuardDebug then
+    begin
+        Plot(OR_State);
+    end;
+
+end;
