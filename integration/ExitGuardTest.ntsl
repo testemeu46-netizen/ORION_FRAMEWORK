@@ -1,1 +1,158 @@
+const
+    ORION_EXITGUARD_VERSION_MAJOR = 1;
+    ORION_EXITGUARD_VERSION_MINOR = 0;
+    ORION_EXITGUARD_VERSION_PATCH = 0;
+    ORION_EXITGUARD_BUILD = 1;
 
+input
+    ExitGuardEnabled(True);
+    ExitGuardDebug(False);
+
+    XG_MaxContracts(3);
+    XG_PartialInput(2);
+
+var
+    XG_Initialized : Boolean;
+    XG_Ready : Boolean;
+    XG_Error : Boolean;
+
+    XG_CurrentBar : Integer;
+    XG_LastBar : Integer;
+    XG_Cycle : Integer;
+
+    XG_Position : Integer;
+    XG_Contracts : Integer;
+    XG_PartialContracts : Integer;
+    XG_RemainingContracts : Integer;
+
+    XG_PartialDone : Boolean;
+
+    XG_ExitAllowed : Boolean;
+    XG_PartialAllowed : Boolean;
+    XG_FinalExitAllowed : Boolean;
+
+    XG_State : Integer;
+    XG_ExecutionAllowed : Boolean;
+
+begin
+
+    if not XG_Initialized then
+    begin
+        XG_Initialized := True;
+
+        XG_Ready := False;
+        XG_Error := False;
+
+        XG_CurrentBar := CurrentBar;
+        XG_LastBar := CurrentBar;
+        XG_Cycle := 0;
+
+        XG_Position := 0;
+
+        XG_Contracts := XG_MaxContracts;
+        XG_PartialContracts := XG_PartialInput;
+        XG_RemainingContracts := 0;
+
+        XG_PartialDone := False;
+
+        XG_ExitAllowed := False;
+        XG_PartialAllowed := False;
+        XG_FinalExitAllowed := False;
+
+        XG_State := 0;
+        XG_ExecutionAllowed := False;
+    end;
+
+    XG_CurrentBar := CurrentBar;
+
+    if ExitGuardEnabled then
+    begin
+
+        if XG_CurrentBar <> XG_LastBar then
+        begin
+            XG_Cycle := XG_Cycle + 1;
+            XG_LastBar := XG_CurrentBar;
+        end;
+
+        XG_Error := False;
+
+        XG_ExitAllowed := False;
+        XG_PartialAllowed := False;
+        XG_FinalExitAllowed := False;
+
+        if XG_Position <= 0 then
+        begin
+            XG_State := 0;
+            XG_RemainingContracts := 0;
+        end
+        else
+        begin
+
+            XG_ExitAllowed := True;
+            XG_RemainingContracts := XG_Position;
+
+            if not XG_PartialDone then
+            begin
+
+                if XG_PartialContracts < XG_Position then
+                begin
+                    if XG_PartialContracts > 0 then
+                    begin
+                        XG_PartialAllowed := True;
+                        XG_State := 1;
+                    end
+                    else
+                    begin
+                        XG_Error := True;
+                        XG_State := 3;
+                    end;
+                end
+                else
+                begin
+                    XG_FinalExitAllowed := True;
+                    XG_State := 2;
+                end;
+
+            end
+            else
+            begin
+                XG_FinalExitAllowed := True;
+                XG_State := 2;
+            end;
+
+        end;
+
+        if XG_Error then
+        begin
+            XG_Ready := False;
+            XG_ExitAllowed := False;
+            XG_PartialAllowed := False;
+            XG_FinalExitAllowed := False;
+        end
+        else
+        begin
+            XG_Ready := True;
+        end;
+
+        XG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        XG_Ready := False;
+        XG_Error := False;
+        XG_State := 0;
+
+        XG_ExitAllowed := False;
+        XG_PartialAllowed := False;
+        XG_FinalExitAllowed := False;
+
+        XG_ExecutionAllowed := False;
+    end;
+
+    if ExitGuardDebug then
+    begin
+        Plot(XG_State);
+    end;
+
+end;
