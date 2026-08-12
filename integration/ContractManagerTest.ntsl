@@ -1,1 +1,128 @@
+const
+    ORION_CONTRACTTEST_VERSION_MAJOR = 1;
+    ORION_CONTRACTTEST_VERSION_MINOR = 0;
+    ORION_CONTRACTTEST_VERSION_PATCH = 0;
+    ORION_CONTRACTTEST_BUILD = 1;
 
+input
+    ContractTestEnabled(True);
+    ContractTestDebug(False);
+
+    CT_MaxContracts(3);
+    CT_PartialInput(2);
+
+var
+    CT_Initialized : Boolean;
+    CT_Ready : Boolean;
+    CT_Error : Boolean;
+
+    CT_CurrentBar : Integer;
+    CT_LastBar : Integer;
+    CT_Cycle : Integer;
+
+    CT_Contracts : Integer;
+    CT_PartialContracts : Integer;
+    CT_RemainingContracts : Integer;
+
+    CT_ValidContracts : Boolean;
+    CT_ValidPartial : Boolean;
+
+    CT_State : Integer;
+    CT_ExecutionAllowed : Boolean;
+
+begin
+
+    if not CT_Initialized then
+    begin
+        CT_Initialized := True;
+
+        CT_Ready := False;
+        CT_Error := False;
+
+        CT_CurrentBar := CurrentBar;
+        CT_LastBar := CurrentBar;
+        CT_Cycle := 0;
+
+        CT_Contracts := CT_MaxContracts;
+        CT_PartialContracts := CT_PartialInput;
+        CT_RemainingContracts := 0;
+
+        CT_ValidContracts := False;
+        CT_ValidPartial := False;
+
+        CT_State := 0;
+        CT_ExecutionAllowed := False;
+    end;
+
+    CT_CurrentBar := CurrentBar;
+
+    if ContractTestEnabled then
+    begin
+
+        if CT_CurrentBar <> CT_LastBar then
+        begin
+            CT_Cycle := CT_Cycle + 1;
+            CT_LastBar := CT_CurrentBar;
+        end;
+
+        CT_ValidContracts := False;
+        CT_ValidPartial := False;
+        CT_Error := False;
+
+        if CT_Contracts > 0 then
+        begin
+            if CT_Contracts <= 100 then
+            begin
+                CT_ValidContracts := True;
+            end;
+        end;
+
+        if CT_PartialContracts > 0 then
+        begin
+            if CT_PartialContracts <= CT_Contracts then
+            begin
+                CT_ValidPartial := True;
+            end;
+        end;
+
+        if CT_ValidContracts and CT_ValidPartial then
+        begin
+            CT_RemainingContracts :=
+                CT_Contracts - CT_PartialContracts;
+
+            if CT_RemainingContracts >= 0 then
+            begin
+                CT_State := 1;
+                CT_Ready := True;
+            end
+            else
+            begin
+                CT_Error := True;
+                CT_State := 2;
+                CT_Ready := False;
+            end;
+        end
+        else
+        begin
+            CT_Error := True;
+            CT_State := 2;
+            CT_Ready := False;
+        end;
+
+        CT_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        CT_Ready := False;
+        CT_Error := False;
+        CT_State := 0;
+        CT_ExecutionAllowed := False;
+    end;
+
+    if ContractTestDebug then
+    begin
+        Plot(CT_State);
+    end;
+
+end;
