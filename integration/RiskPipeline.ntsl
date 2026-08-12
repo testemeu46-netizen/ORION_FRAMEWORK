@@ -1,1 +1,121 @@
+const
+    ORION_RISKPIPELINE_VERSION_MAJOR = 1;
+    ORION_RISKPIPELINE_VERSION_MINOR = 0;
+    ORION_RISKPIPELINE_VERSION_PATCH = 0;
+    ORION_RISKPIPELINE_BUILD = 1;
 
+input
+    RiskPipelineEnabled(True);
+    RiskPipelineDebug(False);
+
+    RP_MaxContracts(3);
+    RP_PartialContracts(2);
+
+    RP_StopFinancial(300);
+    RP_TargetFinancial(1000);
+
+var
+    RP_Initialized : Boolean;
+    RP_Ready : Boolean;
+    RP_Error : Boolean;
+    RP_Blocked : Boolean;
+
+    RP_CurrentBar : Integer;
+    RP_LastBar : Integer;
+    RP_Cycle : Integer;
+
+    RP_Signal : Integer;
+    RP_Confidence : Float;
+
+    RP_DailyResult : Float;
+    RP_RemainingRisk : Float;
+    RP_RemainingTarget : Float;
+
+    RP_Contracts : Integer;
+    RP_Partial : Integer;
+
+    RP_Authorized : Boolean;
+    RP_State : Integer;
+
+begin
+
+    if not RP_Initialized then
+    begin
+        RP_Initialized := True;
+
+        RP_Ready := False;
+        RP_Error := False;
+        RP_Blocked := False;
+
+        RP_CurrentBar := CurrentBar;
+        RP_LastBar := CurrentBar;
+        RP_Cycle := 0;
+
+        RP_Signal := 0;
+        RP_Confidence := 0;
+
+        RP_DailyResult := 0;
+        RP_RemainingRisk := RP_StopFinancial;
+        RP_RemainingTarget := RP_TargetFinancial;
+
+        RP_Contracts := RP_MaxContracts;
+        RP_Partial := RP_PartialContracts;
+
+        RP_Authorized := False;
+        RP_State := 0;
+    end;
+
+    RP_CurrentBar := CurrentBar;
+
+    if RiskPipelineEnabled then
+    begin
+
+        if RP_CurrentBar <> RP_LastBar then
+        begin
+            RP_Cycle := RP_Cycle + 1;
+            RP_LastBar := RP_CurrentBar;
+        end;
+
+        if RP_DailyResult <= -RP_StopFinancial then
+        begin
+            RP_Blocked := True;
+        end;
+
+        if RP_DailyResult >= RP_TargetFinancial then
+        begin
+            RP_Blocked := True;
+        end;
+
+        RP_RemainingRisk :=
+            RP_StopFinancial + RP_DailyResult;
+
+        RP_RemainingTarget :=
+            RP_TargetFinancial - RP_DailyResult;
+
+        if RP_Blocked then
+        begin
+            RP_Authorized := False;
+            RP_State := 2;
+        end
+        else
+        begin
+            RP_Authorized := True;
+            RP_State := 1;
+        end;
+
+        RP_Ready := True;
+
+    end
+    else
+    begin
+        RP_Ready := False;
+        RP_Authorized := False;
+        RP_State := 0;
+    end;
+
+    if RiskPipelineDebug then
+    begin
+        Plot(RP_State);
+    end;
+
+end;
