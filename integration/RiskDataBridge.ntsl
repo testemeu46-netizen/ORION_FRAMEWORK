@@ -1,1 +1,134 @@
+const
+    ORION_RISKBRIDGE_VERSION_MAJOR = 1;
+    ORION_RISKBRIDGE_VERSION_MINOR = 0;
+    ORION_RISKBRIDGE_VERSION_PATCH = 0;
+    ORION_RISKBRIDGE_BUILD = 1;
 
+input
+    RiskBridgeEnabled(True);
+    RiskBridgeDebug(False);
+
+    RB_MaxContracts(3);
+    RB_PartialInput(2);
+
+    RB_StopFinancial(300);
+    RB_TargetFinancial(1000);
+
+var
+    RB_Initialized : Boolean;
+    RB_Ready : Boolean;
+    RB_Error : Boolean;
+    RB_Blocked : Boolean;
+
+    RB_CurrentBar : Integer;
+    RB_LastBar : Integer;
+    RB_Cycle : Integer;
+
+    RB_Signal : Integer;
+    RB_Confidence : Float;
+
+    RB_DailyResult : Float;
+    RB_RemainingRisk : Float;
+    RB_RemainingTarget : Float;
+
+    RB_Contracts : Integer;
+    RB_PartialContracts : Integer;
+
+    RB_Authorized : Boolean;
+    RB_State : Integer;
+
+begin
+
+    if not RB_Initialized then
+    begin
+        RB_Initialized := True;
+
+        RB_Ready := False;
+        RB_Error := False;
+        RB_Blocked := False;
+
+        RB_CurrentBar := CurrentBar;
+        RB_LastBar := CurrentBar;
+        RB_Cycle := 0;
+
+        RB_Signal := 0;
+        RB_Confidence := 0;
+
+        RB_DailyResult := 0;
+        RB_RemainingRisk := RB_StopFinancial;
+        RB_RemainingTarget := RB_TargetFinancial;
+
+        RB_Contracts := RB_MaxContracts;
+        RB_PartialContracts := RB_PartialInput;
+
+        RB_Authorized := False;
+        RB_State := 0;
+    end;
+
+    RB_CurrentBar := CurrentBar;
+
+    if RiskBridgeEnabled then
+    begin
+
+        if RB_CurrentBar <> RB_LastBar then
+        begin
+            RB_Cycle := RB_Cycle + 1;
+            RB_LastBar := RB_CurrentBar;
+        end;
+
+        RB_RemainingRisk :=
+            RB_StopFinancial + RB_DailyResult;
+
+        RB_RemainingTarget :=
+            RB_TargetFinancial - RB_DailyResult;
+
+        RB_Blocked := False;
+
+        if RB_DailyResult <= -RB_StopFinancial then
+        begin
+            RB_Blocked := True;
+        end;
+
+        if RB_DailyResult >= RB_TargetFinancial then
+        begin
+            RB_Blocked := True;
+        end;
+
+        if RB_Blocked then
+        begin
+            RB_Authorized := False;
+            RB_State := 2;
+        end
+        else
+        begin
+
+            if RB_Signal = 0 then
+            begin
+                RB_Authorized := False;
+                RB_State := 0;
+            end
+            else
+            begin
+                RB_Authorized := True;
+                RB_State := 1;
+            end;
+
+        end;
+
+        RB_Ready := True;
+
+    end
+    else
+    begin
+        RB_Ready := False;
+        RB_Authorized := False;
+        RB_Blocked := True;
+        RB_State := 2;
+    end;
+
+    if RiskBridgeDebug then
+    begin
+        Plot(RB_State);
+    end;
+
+end;
