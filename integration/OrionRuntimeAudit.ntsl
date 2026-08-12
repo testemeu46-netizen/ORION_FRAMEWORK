@@ -84,13 +84,6 @@ begin
             RA_LastBar := RA_CurrentBar;
         end;
 
-        /*
-            Nesta primeira versão os estados são
-            validados estruturalmente.
-
-            Nenhuma execução é autorizada.
-        */
-
         RA_MarketOK := True;
         RA_TrendOK := True;
         RA_SignalOK := True;
