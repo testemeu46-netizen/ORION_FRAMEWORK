@@ -1,1 +1,136 @@
+const
+    ORION_RISKLIMIT_VERSION_MAJOR = 1;
+    ORION_RISKLIMIT_VERSION_MINOR = 0;
+    ORION_RISKLIMIT_VERSION_PATCH = 0;
+    ORION_RISKLIMIT_BUILD = 1;
 
+input
+    RiskLimitTestEnabled(True);
+    RiskLimitTestDebug(False);
+
+var
+    RL_Initialized : Boolean;
+    RL_Ready : Boolean;
+    RL_Error : Boolean;
+
+    RL_CurrentBar : Integer;
+    RL_LastBar : Integer;
+    RL_Cycle : Integer;
+
+    RL_DailyResult : Float;
+    RL_StopFinancial : Float;
+    RL_TargetFinancial : Float;
+
+    RL_RemainingRisk : Float;
+    RL_RemainingTarget : Float;
+
+    RL_StopBlocked : Boolean;
+    RL_TargetBlocked : Boolean;
+    RL_Blocked : Boolean;
+    RL_Authorized : Boolean;
+
+    RL_State : Integer;
+    RL_ExecutionAllowed : Boolean;
+
+begin
+
+    if not RL_Initialized then
+    begin
+        RL_Initialized := True;
+
+        RL_Ready := False;
+        RL_Error := False;
+
+        RL_CurrentBar := CurrentBar;
+        RL_LastBar := CurrentBar;
+        RL_Cycle := 0;
+
+        RL_DailyResult := 0;
+
+        RL_StopFinancial := 300;
+        RL_TargetFinancial := 1000;
+
+        RL_RemainingRisk := 300;
+        RL_RemainingTarget := 1000;
+
+        RL_StopBlocked := False;
+        RL_TargetBlocked := False;
+        RL_Blocked := False;
+        RL_Authorized := False;
+
+        RL_State := 0;
+        RL_ExecutionAllowed := False;
+    end;
+
+    RL_CurrentBar := CurrentBar;
+
+    if RiskLimitTestEnabled then
+    begin
+
+        if RL_CurrentBar <> RL_LastBar then
+        begin
+            RL_Cycle := RL_Cycle + 1;
+            RL_LastBar := RL_CurrentBar;
+        end;
+
+        RL_RemainingRisk :=
+            RL_StopFinancial + RL_DailyResult;
+
+        RL_RemainingTarget :=
+            RL_TargetFinancial - RL_DailyResult;
+
+        RL_StopBlocked := False;
+        RL_TargetBlocked := False;
+        RL_Blocked := False;
+        RL_Authorized := False;
+
+        if RL_DailyResult <= -RL_StopFinancial then
+        begin
+            RL_StopBlocked := True;
+        end;
+
+        if RL_DailyResult >= RL_TargetFinancial then
+        begin
+            RL_TargetBlocked := True;
+        end;
+
+        if RL_StopBlocked then
+        begin
+            RL_Blocked := True;
+        end;
+
+        if RL_TargetBlocked then
+        begin
+            RL_Blocked := True;
+        end;
+
+        if not RL_Blocked then
+        begin
+            RL_Authorized := True;
+            RL_State := 1;
+        end
+        else
+        begin
+            RL_Authorized := False;
+            RL_State := 2;
+        end;
+
+        RL_ExecutionAllowed := False;
+        RL_Ready := True;
+
+    end
+    else
+    begin
+        RL_Ready := False;
+        RL_Authorized := False;
+        RL_Blocked := True;
+        RL_ExecutionAllowed := False;
+        RL_State := 2;
+    end;
+
+    if RiskLimitTestDebug then
+    begin
+        Plot(RL_State);
+    end;
+
+end;
