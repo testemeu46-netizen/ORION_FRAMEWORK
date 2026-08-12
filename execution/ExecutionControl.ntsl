@@ -1,1 +1,106 @@
+const
+    ORION_EXECUTIONCONTROL_VERSION_MAJOR = 1;
+    ORION_EXECUTIONCONTROL_VERSION_MINOR = 0;
+    ORION_EXECUTIONCONTROL_VERSION_PATCH = 0;
+    ORION_EXECUTIONCONTROL_BUILD = 1;
 
+input
+    ExecutionControlEnabled(False);
+    ExecutionControlDebug(False);
+
+    EC_MaxContracts(3);
+    EC_PartialContracts(2);
+
+var
+    EC_Initialized : Boolean;
+    EC_Ready : Boolean;
+    EC_Blocked : Boolean;
+
+    EC_CurrentBar : Integer;
+    EC_LastBar : Integer;
+    EC_Cycle : Integer;
+
+    EC_Decision : Integer;
+    EC_RiskAuthorized : Boolean;
+
+    EC_Contracts : Integer;
+    EC_Partial : Integer;
+
+    EC_ExecutionAuthorized : Boolean;
+    EC_State : Integer;
+
+begin
+
+    if not EC_Initialized then
+    begin
+        EC_Initialized := True;
+
+        EC_Ready := False;
+        EC_Blocked := True;
+
+        EC_CurrentBar := CurrentBar;
+        EC_LastBar := CurrentBar;
+        EC_Cycle := 0;
+
+        EC_Decision := 0;
+        EC_RiskAuthorized := False;
+
+        EC_Contracts := EC_MaxContracts;
+        EC_Partial := EC_PartialContracts;
+
+        EC_ExecutionAuthorized := False;
+        EC_State := 0;
+    end;
+
+    EC_CurrentBar := CurrentBar;
+
+    if EC_CurrentBar <> EC_LastBar then
+    begin
+        EC_Cycle := EC_Cycle + 1;
+        EC_LastBar := EC_CurrentBar;
+    end;
+
+    if ExecutionControlEnabled then
+    begin
+
+        EC_Ready := True;
+
+        if EC_RiskAuthorized then
+        begin
+
+            if EC_Decision <> 0 then
+            begin
+                EC_Blocked := False;
+                EC_ExecutionAuthorized := True;
+                EC_State := 1;
+            end
+            else
+            begin
+                EC_Blocked := False;
+                EC_ExecutionAuthorized := False;
+                EC_State := 0;
+            end;
+
+        end
+        else
+        begin
+            EC_Blocked := True;
+            EC_ExecutionAuthorized := False;
+            EC_State := 2;
+        end;
+
+    end
+    else
+    begin
+        EC_Ready := False;
+        EC_Blocked := True;
+        EC_ExecutionAuthorized := False;
+        EC_State := 2;
+    end;
+
+    if ExecutionControlDebug then
+    begin
+        Plot(EC_State);
+    end;
+
+end;
