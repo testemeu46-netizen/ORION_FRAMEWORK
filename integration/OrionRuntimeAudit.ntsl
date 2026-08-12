@@ -1,1 +1,161 @@
+const
+    ORION_RUNTIMEAUDIT_VERSION_MAJOR = 1;
+    ORION_RUNTIMEAUDIT_VERSION_MINOR = 0;
+    ORION_RUNTIMEAUDIT_VERSION_PATCH = 0;
+    ORION_RUNTIMEAUDIT_BUILD = 1;
 
+input
+    RuntimeAuditEnabled(True);
+    RuntimeAuditDebug(False);
+
+var
+    RA_Initialized : Boolean;
+    RA_Ready : Boolean;
+    RA_Error : Boolean;
+
+    RA_CurrentBar : Integer;
+    RA_LastBar : Integer;
+    RA_Cycle : Integer;
+
+    RA_MarketOK : Boolean;
+    RA_TrendOK : Boolean;
+    RA_SignalOK : Boolean;
+    RA_RiskOK : Boolean;
+    RA_DecisionOK : Boolean;
+    RA_ControlOK : Boolean;
+    RA_StateOK : Boolean;
+    RA_ExecutionOK : Boolean;
+
+    RA_Stages : Integer;
+    RA_HealthScore : Float;
+
+    RA_Decision : Integer;
+    RA_Intent : Integer;
+
+    RA_Contracts : Integer;
+    RA_PartialContracts : Integer;
+
+    RA_ExecutionAllowed : Boolean;
+    RA_AuditState : Integer;
+
+begin
+
+    if not RA_Initialized then
+    begin
+        RA_Initialized := True;
+
+        RA_Ready := False;
+        RA_Error := False;
+
+        RA_CurrentBar := CurrentBar;
+        RA_LastBar := CurrentBar;
+        RA_Cycle := 0;
+
+        RA_MarketOK := False;
+        RA_TrendOK := False;
+        RA_SignalOK := False;
+        RA_RiskOK := False;
+        RA_DecisionOK := False;
+        RA_ControlOK := False;
+        RA_StateOK := False;
+        RA_ExecutionOK := False;
+
+        RA_Stages := 0;
+        RA_HealthScore := 0;
+
+        RA_Decision := 0;
+        RA_Intent := 0;
+
+        RA_Contracts := 3;
+        RA_PartialContracts := 2;
+
+        RA_ExecutionAllowed := False;
+        RA_AuditState := 0;
+    end;
+
+    RA_CurrentBar := CurrentBar;
+
+    if RuntimeAuditEnabled then
+    begin
+
+        if RA_CurrentBar <> RA_LastBar then
+        begin
+            RA_Cycle := RA_Cycle + 1;
+            RA_LastBar := RA_CurrentBar;
+        end;
+
+        /*
+            Nesta primeira versão os estados são
+            validados estruturalmente.
+
+            Nenhuma execução é autorizada.
+        */
+
+        RA_MarketOK := True;
+        RA_TrendOK := True;
+        RA_SignalOK := True;
+        RA_RiskOK := True;
+        RA_DecisionOK := True;
+        RA_ControlOK := True;
+        RA_StateOK := True;
+        RA_ExecutionOK := True;
+
+        RA_Stages := 0;
+
+        if RA_MarketOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_TrendOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_SignalOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_RiskOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_DecisionOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_ControlOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_StateOK then
+            RA_Stages := RA_Stages + 1;
+
+        if RA_ExecutionOK then
+            RA_Stages := RA_Stages + 1;
+
+        RA_HealthScore :=
+            (RA_Stages * 100) / 8;
+
+        RA_Decision := 0;
+        RA_Intent := 0;
+
+        RA_ExecutionAllowed := False;
+
+        if RA_Stages = 8 then
+        begin
+            RA_AuditState := 1;
+            RA_Ready := True;
+        end
+        else
+        begin
+            RA_AuditState := 2;
+            RA_Ready := False;
+        end;
+
+    end
+    else
+    begin
+        RA_Ready := False;
+        RA_AuditState := 0;
+        RA_ExecutionAllowed := False;
+    end;
+
+    if RuntimeAuditDebug then
+    begin
+        Plot(RA_HealthScore);
+    end;
+
+end;
