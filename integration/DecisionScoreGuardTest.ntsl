@@ -1,23 +1,40 @@
 const
-    DS_MIN_SCORE = 70;
-    DS_TREND_WEIGHT = 40;
-    DS_SIGNAL_WEIGHT = 35;
-    DS_RISK_WEIGHT = 25;
+    ORION_DECISIONSCORE_VERSION_MAJOR = 1;
+    ORION_DECISIONSCORE_VERSION_MINOR = 0;
+    ORION_DECISIONSCORE_VERSION_PATCH = 0;
+    ORION_DECISIONSCORE_BUILD = 2;
+
+input
+    DecisionScoreEnabled(True);
+    DecisionScoreDebug(False);
+
+    DS_MinScore(70);
+    DS_TrendWeight(40);
+    DS_SignalWeight(35);
+    DS_RiskWeight(25);
 
 var
     DS_Initialized : Boolean;
     DS_Ready : Boolean;
-    DS_Blocked : Boolean;
     DS_Error : Boolean;
+    DS_Blocked : Boolean;
+
+    DS_CurrentBar : Integer;
+    DS_LastBar : Integer;
+    DS_Cycle : Integer;
 
     DS_TrendScore : Float;
     DS_SignalScore : Float;
     DS_RiskScore : Float;
 
     DS_FinalScore : Float;
+
     DS_WeightTotal : Float;
 
-    DS_Allowed : Boolean;
+    DS_DecisionAllowed : Boolean;
+    DS_EntryAllowed : Boolean;
+    DS_ExecutionAllowed : Boolean;
+
     DS_State : Integer;
 
 begin
@@ -25,9 +42,14 @@ begin
     if not DS_Initialized then
     begin
         DS_Initialized := True;
+
         DS_Ready := False;
-        DS_Blocked := False;
         DS_Error := False;
+        DS_Blocked := False;
+
+        DS_CurrentBar := CurrentBar;
+        DS_LastBar := CurrentBar;
+        DS_Cycle := 0;
 
         DS_TrendScore := 0;
         DS_SignalScore := 0;
@@ -36,53 +58,94 @@ begin
         DS_FinalScore := 0;
         DS_WeightTotal := 0;
 
-        DS_Allowed := False;
+        DS_DecisionAllowed := False;
+        DS_EntryAllowed := False;
+        DS_ExecutionAllowed := False;
+
         DS_State := 0;
     end;
 
-    DS_Error := False;
-    DS_Blocked := False;
+    DS_CurrentBar := CurrentBar;
 
-    DS_WeightTotal :=
-        DS_TREND_WEIGHT +
-        DS_SIGNAL_WEIGHT +
-        DS_RISK_WEIGHT;
-
-    if DS_WeightTotal <= 0 then
-    begin
-        DS_Error := True;
-        DS_Blocked := True;
-        DS_Allowed := False;
-        DS_FinalScore := 0;
-        DS_State := 2;
-    end
-    else
+    if DecisionScoreEnabled then
     begin
 
-        DS_FinalScore :=
-            (
-                DS_TrendScore * DS_TREND_WEIGHT +
-                DS_SignalScore * DS_SIGNAL_WEIGHT +
-                DS_RiskScore * DS_RISK_WEIGHT
-            ) / DS_WeightTotal;
-
-        if DS_FinalScore >= DS_MIN_SCORE then
+        if DS_CurrentBar <> DS_LastBar then
         begin
-            DS_Allowed := True;
-            DS_Blocked := False;
-            DS_State := 1;
+            DS_Cycle := DS_Cycle + 1;
+            DS_LastBar := DS_CurrentBar;
+        end;
+
+        DS_Error := False;
+        DS_Blocked := False;
+
+        DS_WeightTotal :=
+            DS_TrendWeight +
+            DS_SignalWeight +
+            DS_RiskWeight;
+
+        if DS_WeightTotal <= 0 then
+        begin
+            DS_Error := True;
+            DS_Blocked := True;
+            DS_FinalScore := 0;
         end
         else
         begin
-            DS_Allowed := False;
+            DS_FinalScore :=
+                (
+                    DS_TrendScore * DS_TrendWeight +
+                    DS_SignalScore * DS_SignalWeight +
+                    DS_RiskScore * DS_RiskWeight
+                ) / DS_WeightTotal;
+        end;
+
+        if DS_FinalScore >= DS_MinScore then
+        begin
+            if not DS_Error then
+            begin
+                DS_DecisionAllowed := True;
+                DS_EntryAllowed := True;
+                DS_Blocked := False;
+                DS_State := 1;
+            end
+            else
+            begin
+                DS_DecisionAllowed := False;
+                DS_EntryAllowed := False;
+                DS_Blocked := True;
+                DS_State := 2;
+            end;
+        end
+        else
+        begin
+            DS_DecisionAllowed := False;
+            DS_EntryAllowed := False;
             DS_Blocked := True;
             DS_State := 2;
         end;
 
+        DS_Ready := True;
+
+        DS_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        DS_Ready := False;
+        DS_Error := False;
+        DS_Blocked := True;
+
+        DS_DecisionAllowed := False;
+        DS_EntryAllowed := False;
+        DS_ExecutionAllowed := False;
+
+        DS_State := 2;
     end;
 
-    DS_Ready := True;
-
-    Plot(DS_FinalScore);
+    if DecisionScoreDebug then
+    begin
+        Plot(DS_FinalScore);
+    end;
 
 end;
