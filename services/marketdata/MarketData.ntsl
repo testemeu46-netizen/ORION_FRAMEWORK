@@ -1,1 +1,82 @@
+const
+    ORION_MARKETDATA_VERSION_MAJOR = 1;
+    ORION_MARKETDATA_VERSION_MINOR = 0;
+    ORION_MARKETDATA_VERSION_PATCH = 0;
+    ORION_MARKETDATA_BUILD = 1;
 
+input
+    MarketDataEnabled(True);
+    MarketDataDebug(False);
+
+var
+    MD_Initialized : Boolean;
+    MD_Ready : Boolean;
+    MD_Error : Boolean;
+
+    MD_CurrentBar : Integer;
+    MD_LastBar : Integer;
+    MD_Cycle : Integer;
+
+    MD_OpenPrice : Float;
+    MD_HighPrice : Float;
+    MD_LowPrice : Float;
+    MD_ClosePrice : Float;
+
+    MD_BarRange : Float;
+    MD_BarBody : Float;
+
+begin
+
+    if not MD_Initialized then
+    begin
+        MD_Initialized := True;
+
+        MD_Ready := False;
+        MD_Error := False;
+
+        MD_CurrentBar := CurrentBar;
+        MD_LastBar := CurrentBar;
+        MD_Cycle := 0;
+
+        MD_OpenPrice := Open;
+        MD_HighPrice := High;
+        MD_LowPrice := Low;
+        MD_ClosePrice := Close;
+
+        MD_BarRange := 0;
+        MD_BarBody := 0;
+    end;
+
+    MD_CurrentBar := CurrentBar;
+
+    MD_OpenPrice := Open;
+    MD_HighPrice := High;
+    MD_LowPrice := Low;
+    MD_ClosePrice := Close;
+
+    MD_BarRange := MD_HighPrice - MD_LowPrice;
+    MD_BarBody := Abs(MD_ClosePrice - MD_OpenPrice);
+
+    if MarketDataEnabled then
+    begin
+
+        if MD_CurrentBar <> MD_LastBar then
+        begin
+            MD_Cycle := MD_Cycle + 1;
+            MD_LastBar := MD_CurrentBar;
+        end;
+
+        MD_Ready := True;
+
+    end
+    else
+    begin
+        MD_Ready := False;
+    end;
+
+    if MarketDataDebug then
+    begin
+        Plot(MD_ClosePrice);
+    end;
+
+end;
