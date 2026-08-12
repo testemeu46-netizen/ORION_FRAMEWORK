@@ -1,1 +1,121 @@
+const
+    ORION_EXECUTIONSTATE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONSTATE_VERSION_MINOR = 0;
+    ORION_EXECUTIONSTATE_VERSION_PATCH = 0;
+    ORION_EXECUTIONSTATE_VERSION_BUILD = 1;
 
+input
+    ExecutionStateGuardEnabled(True);
+    ExecutionStateGuardDebug(False);
+
+var
+    ES_Initialized : Boolean;
+    ES_Ready : Boolean;
+    ES_Error : Boolean;
+    ES_Blocked : Boolean;
+
+    ES_State : Integer;
+    ES_PreviousState : Integer;
+
+    ES_StateValid : Boolean;
+    ES_TransitionValid : Boolean;
+    ES_StateApproved : Boolean;
+
+    ES_DecisionAllowed : Boolean;
+    ES_EntryAllowed : Boolean;
+    ES_ExecutionAllowed : Boolean;
+
+begin
+
+    if not ES_Initialized then
+    begin
+        ES_Initialized := True;
+
+        ES_Ready := False;
+        ES_Error := False;
+        ES_Blocked := False;
+
+        ES_State := 0;
+        ES_PreviousState := 0;
+
+        ES_StateValid := False;
+        ES_TransitionValid := False;
+        ES_StateApproved := False;
+
+        ES_DecisionAllowed := False;
+        ES_EntryAllowed := False;
+        ES_ExecutionAllowed := False;
+    end;
+
+    if ExecutionStateGuardEnabled then
+    begin
+
+        ES_Error := False;
+        ES_Blocked := False;
+
+        ES_StateValid := False;
+        ES_TransitionValid := False;
+        ES_StateApproved := False;
+
+        if ES_State >= 0 then
+        begin
+            if ES_State <= 2 then
+            begin
+                ES_StateValid := True;
+            end;
+        end;
+
+        if ES_PreviousState >= 0 then
+        begin
+            if ES_PreviousState <= 2 then
+            begin
+                ES_TransitionValid := True;
+            end;
+        end;
+
+        if ES_StateValid and ES_TransitionValid then
+        begin
+            if ES_State <> 2 then
+            begin
+                ES_StateApproved := True;
+            end;
+        end;
+
+        if ES_StateApproved then
+        begin
+            ES_DecisionAllowed := True;
+            ES_EntryAllowed := True;
+            ES_Blocked := False;
+        end
+        else
+        begin
+            ES_Error := True;
+            ES_Blocked := True;
+
+            ES_DecisionAllowed := False;
+            ES_EntryAllowed := False;
+        end;
+
+        ES_PreviousState := ES_State;
+
+        ES_Ready := True;
+
+        ES_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ES_Ready := False;
+        ES_Blocked := True;
+
+        ES_DecisionAllowed := False;
+        ES_EntryAllowed := False;
+        ES_ExecutionAllowed := False;
+    end;
+
+    if ExecutionStateGuardDebug then
+    begin
+        Plot(ES_State);
+    end;
+
+end;
