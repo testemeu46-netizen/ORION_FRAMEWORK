@@ -1,1 +1,136 @@
+const
+    ORION_AUDIT_VERSION_MAJOR = 1;
+    ORION_AUDIT_VERSION_MINOR = 0;
+    ORION_AUDIT_VERSION_PATCH = 0;
+    ORION_AUDIT_BUILD = 1;
 
+input
+    OrionAuditEnabled(True);
+    OrionAuditDebug(False);
+
+var
+    OA_Initialized : Boolean;
+    OA_Ready : Boolean;
+    OA_Error : Boolean;
+
+    OA_CurrentBar : Integer;
+    OA_LastBar : Integer;
+    OA_Cycle : Integer;
+
+    OA_MarketData : Boolean;
+    OA_MarketFlow : Boolean;
+    OA_Trend : Boolean;
+    OA_Signal : Boolean;
+    OA_Risk : Boolean;
+    OA_Decision : Boolean;
+    OA_Control : Boolean;
+    OA_State : Boolean;
+    OA_Execution : Boolean;
+
+    OA_Stages : Integer;
+    OA_HealthScore : Float;
+
+    OA_AuditState : Integer;
+    OA_ExecutionAllowed : Boolean;
+
+begin
+
+    if not OA_Initialized then
+    begin
+        OA_Initialized := True;
+
+        OA_Ready := False;
+        OA_Error := False;
+
+        OA_CurrentBar := CurrentBar;
+        OA_LastBar := CurrentBar;
+        OA_Cycle := 0;
+
+        OA_MarketData := True;
+        OA_MarketFlow := True;
+        OA_Trend := True;
+        OA_Signal := True;
+        OA_Risk := True;
+        OA_Decision := True;
+        OA_Control := True;
+        OA_State := True;
+        OA_Execution := True;
+
+        OA_Stages := 0;
+        OA_HealthScore := 0;
+
+        OA_AuditState := 0;
+
+        OA_ExecutionAllowed := False;
+    end;
+
+    OA_CurrentBar := CurrentBar;
+
+    if OrionAuditEnabled then
+    begin
+
+        if OA_CurrentBar <> OA_LastBar then
+        begin
+            OA_Cycle := OA_Cycle + 1;
+            OA_LastBar := OA_CurrentBar;
+        end;
+
+        OA_Stages := 0;
+
+        if OA_MarketData then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_MarketFlow then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Trend then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Signal then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Risk then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Decision then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Control then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_State then
+            OA_Stages := OA_Stages + 1;
+
+        if OA_Execution then
+            OA_Stages := OA_Stages + 1;
+
+        OA_HealthScore :=
+            (OA_Stages * 100) / 9;
+
+        if OA_Stages = 9 then
+        begin
+            OA_AuditState := 1;
+            OA_Ready := True;
+        end
+        else
+        begin
+            OA_AuditState := 2;
+            OA_Ready := False;
+        end;
+
+        OA_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        OA_Ready := False;
+        OA_AuditState := 0;
+        OA_ExecutionAllowed := False;
+    end;
+
+    if OrionAuditDebug then
+    begin
+        Plot(OA_HealthScore);
+    end;
+
+end;
