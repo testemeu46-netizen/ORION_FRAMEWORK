@@ -1,1 +1,128 @@
+const
+    ORION_DAILYGUARD_VERSION_MAJOR = 1;
+    ORION_DAILYGUARD_VERSION_MINOR = 0;
+    ORION_DAILYGUARD_VERSION_PATCH = 0;
+    ORION_DAILYGUARD_BUILD = 1;
 
+input
+    DailyGuardEnabled(True);
+    DailyGuardDebug(False);
+
+    DG_StopFinancial(300);
+    DG_TargetFinancial(1000);
+
+var
+    DG_Initialized : Boolean;
+    DG_Ready : Boolean;
+    DG_Error : Boolean;
+    DG_Blocked : Boolean;
+
+    DG_CurrentBar : Integer;
+    DG_LastBar : Integer;
+    DG_Cycle : Integer;
+
+    DG_DailyResult : Float;
+
+    DG_StopReached : Boolean;
+    DG_TargetReached : Boolean;
+
+    DG_EntryAllowed : Boolean;
+    DG_SignalAllowed : Boolean;
+
+    DG_State : Integer;
+    DG_ExecutionAllowed : Boolean;
+
+begin
+
+    if not DG_Initialized then
+    begin
+        DG_Initialized := True;
+
+        DG_Ready := False;
+        DG_Error := False;
+        DG_Blocked := False;
+
+        DG_CurrentBar := CurrentBar;
+        DG_LastBar := CurrentBar;
+        DG_Cycle := 0;
+
+        DG_DailyResult := 0;
+
+        DG_StopReached := False;
+        DG_TargetReached := False;
+
+        DG_EntryAllowed := False;
+        DG_SignalAllowed := False;
+
+        DG_State := 0;
+        DG_ExecutionAllowed := False;
+    end;
+
+    DG_CurrentBar := CurrentBar;
+
+    if DailyGuardEnabled then
+    begin
+
+        if DG_CurrentBar <> DG_LastBar then
+        begin
+            DG_Cycle := DG_Cycle + 1;
+            DG_LastBar := DG_CurrentBar;
+        end;
+
+        DG_StopReached := False;
+        DG_TargetReached := False;
+        DG_Blocked := False;
+
+        if DG_DailyResult <= -DG_StopFinancial then
+        begin
+            DG_StopReached := True;
+        end;
+
+        if DG_DailyResult >= DG_TargetFinancial then
+        begin
+            DG_TargetReached := True;
+        end;
+
+        if DG_StopReached then
+        begin
+            DG_Blocked := True;
+        end;
+
+        if DG_TargetReached then
+        begin
+            DG_Blocked := True;
+        end;
+
+        if DG_Blocked then
+        begin
+            DG_EntryAllowed := False;
+            DG_SignalAllowed := False;
+            DG_State := 2;
+        end
+        else
+        begin
+            DG_EntryAllowed := True;
+            DG_SignalAllowed := True;
+            DG_State := 1;
+        end;
+
+        DG_ExecutionAllowed := False;
+        DG_Ready := True;
+
+    end
+    else
+    begin
+        DG_Ready := False;
+        DG_Blocked := True;
+        DG_EntryAllowed := False;
+        DG_SignalAllowed := False;
+        DG_ExecutionAllowed := False;
+        DG_State := 2;
+    end;
+
+    if DailyGuardDebug then
+    begin
+        Plot(DG_State);
+    end;
+
+end;
