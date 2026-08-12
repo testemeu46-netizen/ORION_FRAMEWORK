@@ -1,1 +1,112 @@
+const
+    ORION_DECISION_VERSION_MAJOR = 1;
+    ORION_DECISION_VERSION_MINOR = 0;
+    ORION_DECISION_VERSION_PATCH = 0;
+    ORION_DECISION_BUILD = 1;
 
+input
+    DecisionEnabled(True);
+    DecisionDebug(False);
+
+var
+    DE_Initialized : Boolean;
+    DE_Ready : Boolean;
+    DE_Error : Boolean;
+    DE_Blocked : Boolean;
+
+    DE_CurrentBar : Integer;
+    DE_LastBar : Integer;
+    DE_Cycle : Integer;
+
+    DE_TrendDirection : Integer;
+    DE_Signal : Integer;
+    DE_RiskAuthorized : Boolean;
+
+    DE_Decision : Integer;
+    DE_Confidence : Float;
+
+begin
+
+    if not DE_Initialized then
+    begin
+        DE_Initialized := True;
+
+        DE_Ready := False;
+        DE_Error := False;
+        DE_Blocked := False;
+
+        DE_CurrentBar := CurrentBar;
+        DE_LastBar := CurrentBar;
+        DE_Cycle := 0;
+
+        DE_TrendDirection := 0;
+        DE_Signal := 0;
+        DE_RiskAuthorized := False;
+
+        DE_Decision := 0;
+        DE_Confidence := 0;
+    end;
+
+    DE_CurrentBar := CurrentBar;
+
+    if DecisionEnabled then
+    begin
+
+        if DE_CurrentBar <> DE_LastBar then
+        begin
+            DE_Cycle := DE_Cycle + 1;
+            DE_LastBar := DE_CurrentBar;
+        end;
+
+        DE_TrendDirection := 0;
+        DE_Signal := 0;
+        DE_RiskAuthorized := True;
+
+        if DE_RiskAuthorized then
+        begin
+
+            if (DE_TrendDirection = 1) and
+               (DE_Signal = 1) then
+            begin
+                DE_Decision := 1;
+                DE_Confidence := 100;
+            end
+            else
+            begin
+                if (DE_TrendDirection = -1) and
+                   (DE_Signal = -1) then
+                begin
+                    DE_Decision := -1;
+                    DE_Confidence := 100;
+                end
+                else
+                begin
+                    DE_Decision := 0;
+                    DE_Confidence := 0;
+                end;
+            end;
+
+        end
+        else
+        begin
+            DE_Decision := 2;
+            DE_Confidence := 0;
+            DE_Blocked := True;
+        end;
+
+        DE_Ready := True;
+
+    end
+    else
+    begin
+        DE_Ready := False;
+        DE_Decision := 0;
+        DE_Confidence := 0;
+    end;
+
+    if DecisionDebug then
+    begin
+        Plot(DE_Decision);
+    end;
+
+end;
