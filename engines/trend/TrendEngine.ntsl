@@ -1,1 +1,116 @@
+const
+    ORION_TREND_VERSION_MAJOR = 1;
+    ORION_TREND_VERSION_MINOR = 0;
+    ORION_TREND_VERSION_PATCH = 0;
+    ORION_TREND_BUILD = 1;
 
+input
+    TrendEnabled(True);
+    TrendDebug(False);
+
+var
+    TR_Initialized : Boolean;
+    TR_Ready : Boolean;
+    TR_Error : Boolean;
+
+    TR_CurrentBar : Integer;
+    TR_LastBar : Integer;
+    TR_Cycle : Integer;
+
+    TR_FastAverage : Float;
+    TR_SlowAverage : Float;
+
+    TR_Score : Float;
+    TR_Strength : Float;
+
+    TR_Direction : Integer;
+    TR_State : Integer;
+
+begin
+
+    if not TR_Initialized then
+    begin
+        TR_Initialized := True;
+
+        TR_Ready := False;
+        TR_Error := False;
+
+        TR_CurrentBar := CurrentBar;
+        TR_LastBar := CurrentBar;
+        TR_Cycle := 0;
+
+        TR_FastAverage := 0;
+        TR_SlowAverage := 0;
+
+        TR_Score := 0;
+        TR_Strength := 0;
+
+        TR_Direction := 0;
+        TR_State := 0;
+    end;
+
+    TR_CurrentBar := CurrentBar;
+
+    TR_FastAverage := MediaExp(9, Close);
+    TR_SlowAverage := MediaExp(21, Close);
+
+    if TR_FastAverage > TR_SlowAverage then
+    begin
+        TR_Direction := 1;
+    end
+    else
+    begin
+        if TR_FastAverage < TR_SlowAverage then
+        begin
+            TR_Direction := -1;
+        end
+        else
+        begin
+            TR_Direction := 0;
+        end;
+    end;
+
+    TR_Score :=
+        TR_FastAverage - TR_SlowAverage;
+
+    TR_Strength := Abs(TR_Score);
+
+    if TR_Direction = 1 then
+    begin
+        TR_State := 1;
+    end
+    else
+    begin
+        if TR_Direction = -1 then
+        begin
+            TR_State := -1;
+        end
+        else
+        begin
+            TR_State := 0;
+        end;
+    end;
+
+    if TrendEnabled then
+    begin
+
+        if TR_CurrentBar <> TR_LastBar then
+        begin
+            TR_Cycle := TR_Cycle + 1;
+            TR_LastBar := TR_CurrentBar;
+        end;
+
+        TR_Ready := True;
+
+    end
+    else
+    begin
+        TR_Ready := False;
+    end;
+
+    if TrendDebug then
+    begin
+        Plot(TR_Score);
+    end;
+
+end;
