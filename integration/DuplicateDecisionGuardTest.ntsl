@@ -1,1 +1,127 @@
+const
+    ORION_DUPLICATE_VERSION_MAJOR = 1;
+    ORION_DUPLICATE_VERSION_MINOR = 0;
+    ORION_DUPLICATE_VERSION_PATCH = 0;
+    ORION_DUPLICATE_VERSION_BUILD = 1;
 
+input
+    DuplicateGuardEnabled(True);
+    DuplicateGuardDebug(False);
+
+var
+    DD_Initialized : Boolean;
+    DD_Ready : Boolean;
+    DD_Error : Boolean;
+    DD_Blocked : Boolean;
+
+    DD_CurrentBar : Integer;
+    DD_LastBar : Integer;
+
+    DD_DecisionId : Integer;
+    DD_LastDecisionId : Integer;
+
+    DD_NewDecision : Boolean;
+    DD_Duplicate : Boolean;
+
+    DD_DecisionAllowed : Boolean;
+    DD_EntryAllowed : Boolean;
+    DD_ExecutionAllowed : Boolean;
+
+    DD_State : Integer;
+
+begin
+
+    if not DD_Initialized then
+    begin
+        DD_Initialized := True;
+
+        DD_Ready := False;
+        DD_Error := False;
+        DD_Blocked := False;
+
+        DD_CurrentBar := CurrentBar;
+        DD_LastBar := CurrentBar;
+
+        DD_DecisionId := 0;
+        DD_LastDecisionId := -1;
+
+        DD_NewDecision := False;
+        DD_Duplicate := False;
+
+        DD_DecisionAllowed := False;
+        DD_EntryAllowed := False;
+        DD_ExecutionAllowed := False;
+
+        DD_State := 0;
+    end;
+
+    DD_CurrentBar := CurrentBar;
+
+    if DuplicateGuardEnabled then
+    begin
+
+        DD_Error := False;
+        DD_Blocked := False;
+
+        DD_NewDecision := False;
+        DD_Duplicate := False;
+
+        if DD_CurrentBar <> DD_LastBar then
+        begin
+            DD_LastBar := DD_CurrentBar;
+            DD_DecisionId := DD_DecisionId + 1;
+        end;
+
+        if DD_DecisionId <> DD_LastDecisionId then
+        begin
+            DD_NewDecision := True;
+        end
+        else
+        begin
+            DD_Duplicate := True;
+        end;
+
+        if DD_Duplicate then
+        begin
+            DD_Blocked := True;
+
+            DD_DecisionAllowed := False;
+            DD_EntryAllowed := False;
+            DD_ExecutionAllowed := False;
+
+            DD_State := 2;
+        end
+        else
+        begin
+            DD_Blocked := False;
+
+            DD_DecisionAllowed := True;
+            DD_EntryAllowed := True;
+            DD_ExecutionAllowed := False;
+
+            DD_LastDecisionId := DD_DecisionId;
+
+            DD_State := 1;
+        end;
+
+        DD_Ready := True;
+
+    end
+    else
+    begin
+        DD_Ready := False;
+        DD_Blocked := True;
+
+        DD_DecisionAllowed := False;
+        DD_EntryAllowed := False;
+        DD_ExecutionAllowed := False;
+
+        DD_State := 2;
+    end;
+
+    if DuplicateGuardDebug then
+    begin
+        Plot(DD_State);
+    end;
+
+end;
