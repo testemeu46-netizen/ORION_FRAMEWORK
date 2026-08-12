@@ -1,1 +1,159 @@
+const
+    ORION_SIGNALBRIDGE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGE_BUILD = 1;
 
+input
+    SignalBridgeEnabled(True);
+    SignalBridgeDebug(False);
+
+var
+    SB_Initialized : Boolean;
+    SB_Ready : Boolean;
+    SB_Error : Boolean;
+
+    SB_CurrentBar : Integer;
+    SB_LastBar : Integer;
+    SB_Cycle : Integer;
+
+    SB_Close : Float;
+    SB_Volume : Float;
+    SB_AggressionBalance : Float;
+
+    SB_FastAverage : Float;
+    SB_SlowAverage : Float;
+
+    SB_TrendScore : Float;
+    SB_TrendStrength : Float;
+    SB_TrendDirection : Integer;
+
+    SB_Signal : Integer;
+    SB_Confidence : Float;
+    SB_State : Integer;
+
+begin
+
+    if not SB_Initialized then
+    begin
+        SB_Initialized := True;
+
+        SB_Ready := False;
+        SB_Error := False;
+
+        SB_CurrentBar := CurrentBar;
+        SB_LastBar := CurrentBar;
+        SB_Cycle := 0;
+
+        SB_Close := Close;
+        SB_Volume := Volume;
+        SB_AggressionBalance := 0;
+
+        SB_FastAverage := 0;
+        SB_SlowAverage := 0;
+
+        SB_TrendScore := 0;
+        SB_TrendStrength := 0;
+        SB_TrendDirection := 0;
+
+        SB_Signal := 0;
+        SB_Confidence := 0;
+        SB_State := 0;
+    end;
+
+    SB_CurrentBar := CurrentBar;
+
+    SB_Close := Close;
+    SB_Volume := Volume;
+
+    if Close > Open then
+    begin
+        SB_AggressionBalance := SB_Volume;
+    end
+    else
+    begin
+        if Close < Open then
+        begin
+            SB_AggressionBalance := -SB_Volume;
+        end
+        else
+        begin
+            SB_AggressionBalance := 0;
+        end;
+    end;
+
+    SB_FastAverage := MediaExp(9, Close);
+    SB_SlowAverage := MediaExp(21, Close);
+
+    SB_TrendScore :=
+        SB_FastAverage - SB_SlowAverage;
+
+    SB_TrendStrength :=
+        Abs(SB_TrendScore);
+
+    if SB_TrendScore > 0 then
+    begin
+        SB_TrendDirection := 1;
+    end
+    else
+    begin
+        if SB_TrendScore < 0 then
+        begin
+            SB_TrendDirection := -1;
+        end
+        else
+        begin
+            SB_TrendDirection := 0;
+        end;
+    end;
+
+    SB_Signal := 0;
+    SB_Confidence := 0;
+    SB_State := 0;
+
+    if SB_TrendDirection = 1 then
+    begin
+        if SB_AggressionBalance > 0 then
+        begin
+            SB_Signal := 1;
+            SB_Confidence := 100;
+            SB_State := 1;
+        end;
+    end;
+
+    if SB_TrendDirection = -1 then
+    begin
+        if SB_AggressionBalance < 0 then
+        begin
+            SB_Signal := -1;
+            SB_Confidence := 100;
+            SB_State := -1;
+        end;
+    end;
+
+    if SignalBridgeEnabled then
+    begin
+
+        if SB_CurrentBar <> SB_LastBar then
+        begin
+            SB_Cycle := SB_Cycle + 1;
+            SB_LastBar := SB_CurrentBar;
+        end;
+
+        SB_Ready := True;
+
+    end
+    else
+    begin
+        SB_Ready := False;
+        SB_Signal := 0;
+        SB_Confidence := 0;
+        SB_State := 0;
+    end;
+
+    if SignalBridgeDebug then
+    begin
+        Plot(SB_Signal);
+    end;
+
+end;
