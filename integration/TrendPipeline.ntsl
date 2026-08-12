@@ -1,1 +1,154 @@
+const
+    ORION_TRENDPipeline_VERSION_MAJOR = 1;
+    ORION_TRENDPipeline_VERSION_MINOR = 0;
+    ORION_TRENDPipeline_VERSION_PATCH = 0;
+    ORION_TRENDPipeline_BUILD = 1;
 
+input
+    TrendPipelineEnabled(True);
+    TrendPipelineDebug(False);
+
+var
+    TP_Initialized : Boolean;
+    TP_Ready : Boolean;
+    TP_Error : Boolean;
+
+    TP_CurrentBar : Integer;
+    TP_LastBar : Integer;
+    TP_Cycle : Integer;
+
+    TP_Close : Float;
+    TP_Range : Float;
+    TP_Body : Float;
+
+    TP_Volume : Float;
+    TP_FinancialVolume : Float;
+
+    TP_BuyAggression : Float;
+    TP_SellAggression : Float;
+    TP_AggressionBalance : Float;
+
+    TP_FastAverage : Float;
+    TP_SlowAverage : Float;
+
+    TP_TrendScore : Float;
+    TP_TrendStrength : Float;
+    TP_Direction : Integer;
+    TP_State : Integer;
+
+begin
+
+    if not TP_Initialized then
+    begin
+        TP_Initialized := True;
+
+        TP_Ready := False;
+        TP_Error := False;
+
+        TP_CurrentBar := CurrentBar;
+        TP_LastBar := CurrentBar;
+        TP_Cycle := 0;
+
+        TP_Close := Close;
+        TP_Range := 0;
+        TP_Body := 0;
+
+        TP_Volume := 0;
+        TP_FinancialVolume := 0;
+
+        TP_BuyAggression := 0;
+        TP_SellAggression := 0;
+        TP_AggressionBalance := 0;
+
+        TP_FastAverage := 0;
+        TP_SlowAverage := 0;
+
+        TP_TrendScore := 0;
+        TP_TrendStrength := 0;
+        TP_Direction := 0;
+        TP_State := 0;
+    end;
+
+    TP_CurrentBar := CurrentBar;
+
+    TP_Close := Close;
+
+    TP_Range := High - Low;
+    TP_Body := Abs(Close - Open);
+
+    TP_Volume := Volume;
+    TP_FinancialVolume := Close * Volume;
+
+    if Close > Open then
+    begin
+        TP_BuyAggression := TP_Volume;
+        TP_SellAggression := 0;
+    end
+    else
+    begin
+        if Close < Open then
+        begin
+            TP_BuyAggression := 0;
+            TP_SellAggression := TP_Volume;
+        end
+        else
+        begin
+            TP_BuyAggression := 0;
+            TP_SellAggression := 0;
+        end;
+    end;
+
+    TP_AggressionBalance :=
+        TP_BuyAggression - TP_SellAggression;
+
+    TP_FastAverage := MediaExp(9, Close);
+    TP_SlowAverage := MediaExp(21, Close);
+
+    TP_TrendScore :=
+        TP_FastAverage - TP_SlowAverage;
+
+    TP_TrendStrength :=
+        Abs(TP_TrendScore);
+
+    if TP_FastAverage > TP_SlowAverage then
+    begin
+        TP_Direction := 1;
+        TP_State := 1;
+    end
+    else
+    begin
+        if TP_FastAverage < TP_SlowAverage then
+        begin
+            TP_Direction := -1;
+            TP_State := -1;
+        end
+        else
+        begin
+            TP_Direction := 0;
+            TP_State := 0;
+        end;
+    end;
+
+    if TrendPipelineEnabled then
+    begin
+
+        if TP_CurrentBar <> TP_LastBar then
+        begin
+            TP_Cycle := TP_Cycle + 1;
+            TP_LastBar := TP_CurrentBar;
+        end;
+
+        TP_Ready := True;
+
+    end
+    else
+    begin
+        TP_Ready := False;
+    end;
+
+    if TrendPipelineDebug then
+    begin
+        Plot(TP_TrendScore);
+    end;
+
+end;
