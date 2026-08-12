@@ -1,1 +1,172 @@
+const
+    ORION_FINAL_VERSION_MAJOR = 1;
+    ORION_FINAL_VERSION_MINOR = 0;
+    ORION_FINAL_VERSION_PATCH = 0;
+    ORION_FINAL_VERSION_BUILD = 1;
 
+input
+    FinalGuardEnabled(True);
+    FinalGuardDebug(False);
+
+    FG_MinScore(70);
+
+var
+    FG_Initialized : Boolean;
+    FG_Ready : Boolean;
+    FG_Error : Boolean;
+    FG_Blocked : Boolean;
+
+    FG_DataValid : Boolean;
+    FG_SignalValid : Boolean;
+    FG_DirectionValid : Boolean;
+    FG_ScoreValid : Boolean;
+
+    FG_TrendDirection : Integer;
+    FG_Signal : Integer;
+    FG_Direction : Integer;
+    FG_Score : Float;
+
+    FG_FinalDecision : Boolean;
+    FG_EntryAllowed : Boolean;
+    FG_ExecutionAllowed : Boolean;
+
+    FG_State : Integer;
+
+begin
+
+    if not FG_Initialized then
+    begin
+        FG_Initialized := True;
+
+        FG_Ready := False;
+        FG_Error := False;
+        FG_Blocked := False;
+
+        FG_DataValid := False;
+        FG_SignalValid := False;
+        FG_DirectionValid := False;
+        FG_ScoreValid := False;
+
+        FG_TrendDirection := 0;
+        FG_Signal := 0;
+        FG_Direction := 0;
+        FG_Score := 0;
+
+        FG_FinalDecision := False;
+        FG_EntryAllowed := False;
+        FG_ExecutionAllowed := False;
+
+        FG_State := 0;
+    end;
+
+    if FinalGuardEnabled then
+    begin
+
+        FG_Error := False;
+        FG_Blocked := False;
+
+        FG_DataValid := True;
+
+        FG_SignalValid := False;
+
+        if FG_Signal >= -1 then
+        begin
+            if FG_Signal <= 1 then
+            begin
+                FG_SignalValid := True;
+            end;
+        end;
+
+        FG_DirectionValid := False;
+
+        if FG_Direction >= -1 then
+        begin
+            if FG_Direction <= 1 then
+            begin
+                FG_DirectionValid := True;
+            end;
+        end;
+
+        FG_ScoreValid := False;
+
+        if FG_Score >= 0 then
+        begin
+            if FG_Score <= 100 then
+            begin
+                FG_ScoreValid := True;
+            end;
+        end;
+
+        if FG_DataValid and FG_SignalValid then
+        begin
+            if FG_DirectionValid and FG_ScoreValid then
+            begin
+
+                if FG_Signal <> 0 then
+                begin
+                    if FG_Direction <> 0 then
+                    begin
+                        if FG_Score >= FG_MinScore then
+                        begin
+                            FG_FinalDecision := True;
+                        end
+                        else
+                        begin
+                            FG_FinalDecision := False;
+                        end;
+                    end
+                    else
+                    begin
+                        FG_FinalDecision := False;
+                    end;
+                end
+                else
+                begin
+                    FG_FinalDecision := False;
+                end;
+
+            end
+            else
+            begin
+                FG_FinalDecision := False;
+            end;
+        end
+        else
+        begin
+            FG_FinalDecision := False;
+        end;
+
+        if FG_FinalDecision then
+        begin
+            FG_Blocked := False;
+            FG_EntryAllowed := True;
+            FG_State := 1;
+        end
+        else
+        begin
+            FG_Blocked := True;
+            FG_EntryAllowed := False;
+            FG_State := 2;
+        end;
+
+        FG_Ready := True;
+
+        FG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        FG_Ready := False;
+        FG_Blocked := True;
+        FG_FinalDecision := False;
+        FG_EntryAllowed := False;
+        FG_ExecutionAllowed := False;
+        FG_State := 2;
+    end;
+
+    if FinalGuardDebug then
+    begin
+        Plot(FG_State);
+    end;
+
+end;
