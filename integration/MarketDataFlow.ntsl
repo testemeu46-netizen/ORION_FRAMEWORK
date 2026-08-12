@@ -1,1 +1,135 @@
+const
+    ORION_MARKETDATAFLOW_VERSION_MAJOR = 1;
+    ORION_MARKETDATAFLOW_VERSION_MINOR = 0;
+    ORION_MARKETDATAFLOW_VERSION_PATCH = 0;
+    ORION_MARKETDATAFLOW_BUILD = 1;
 
+input
+    MarketDataFlowEnabled(True);
+    MarketDataFlowDebug(False);
+
+var
+    MDF_Initialized : Boolean;
+    MDF_Ready : Boolean;
+    MDF_Error : Boolean;
+
+    MDF_CurrentBar : Integer;
+    MDF_LastBar : Integer;
+    MDF_Cycle : Integer;
+
+    MDF_Open : Float;
+    MDF_High : Float;
+    MDF_Low : Float;
+    MDF_Close : Float;
+
+    MDF_Range : Float;
+    MDF_Body : Float;
+
+    MDF_Volume : Float;
+    MDF_FinancialVolume : Float;
+
+    MDF_BuyAggression : Float;
+    MDF_SellAggression : Float;
+    MDF_AggressionBalance : Float;
+
+    MDF_DataReady : Boolean;
+    MDF_FlowReady : Boolean;
+
+begin
+
+    if not MDF_Initialized then
+    begin
+        MDF_Initialized := True;
+
+        MDF_Ready := False;
+        MDF_Error := False;
+
+        MDF_CurrentBar := CurrentBar;
+        MDF_LastBar := CurrentBar;
+        MDF_Cycle := 0;
+
+        MDF_Open := Open;
+        MDF_High := High;
+        MDF_Low := Low;
+        MDF_Close := Close;
+
+        MDF_Range := 0;
+        MDF_Body := 0;
+
+        MDF_Volume := 0;
+        MDF_FinancialVolume := 0;
+
+        MDF_BuyAggression := 0;
+        MDF_SellAggression := 0;
+        MDF_AggressionBalance := 0;
+
+        MDF_DataReady := False;
+        MDF_FlowReady := False;
+    end;
+
+    MDF_CurrentBar := CurrentBar;
+
+    MDF_Open := Open;
+    MDF_High := High;
+    MDF_Low := Low;
+    MDF_Close := Close;
+
+    MDF_Range := MDF_High - MDF_Low;
+    MDF_Body := Abs(MDF_Close - MDF_Open);
+
+    MDF_Volume := Volume;
+    MDF_FinancialVolume := MDF_Close * MDF_Volume;
+
+    if MDF_Close > MDF_Open then
+    begin
+        MDF_BuyAggression := MDF_Volume;
+        MDF_SellAggression := 0;
+    end
+    else
+    begin
+        if MDF_Close < MDF_Open then
+        begin
+            MDF_BuyAggression := 0;
+            MDF_SellAggression := MDF_Volume;
+        end
+        else
+        begin
+            MDF_BuyAggression := 0;
+            MDF_SellAggression := 0;
+        end;
+    end;
+
+    MDF_AggressionBalance :=
+        MDF_BuyAggression - MDF_SellAggression;
+
+    if MarketDataFlowEnabled then
+    begin
+
+        if MDF_CurrentBar <> MDF_LastBar then
+        begin
+            MDF_Cycle := MDF_Cycle + 1;
+            MDF_LastBar := MDF_CurrentBar;
+        end;
+
+        MDF_DataReady := True;
+        MDF_FlowReady := True;
+
+        if MDF_DataReady and MDF_FlowReady then
+            MDF_Ready := True
+        else
+            MDF_Ready := False;
+
+    end
+    else
+    begin
+        MDF_DataReady := False;
+        MDF_FlowReady := False;
+        MDF_Ready := False;
+    end;
+
+    if MarketDataFlowDebug then
+    begin
+        Plot(MDF_AggressionBalance);
+    end;
+
+end;
