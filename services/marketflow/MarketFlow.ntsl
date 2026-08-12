@@ -1,1 +1,97 @@
+const
+    ORION_MARKETFLOW_VERSION_MAJOR = 1;
+    ORION_MARKETFLOW_VERSION_MINOR = 0;
+    ORION_MARKETFLOW_VERSION_PATCH = 0;
+    ORION_MARKETFLOW_BUILD = 1;
 
+input
+    MarketFlowEnabled(True);
+    MarketFlowDebug(False);
+
+var
+    MF_Initialized : Boolean;
+    MF_Ready : Boolean;
+    MF_Error : Boolean;
+
+    MF_CurrentBar : Integer;
+    MF_LastBar : Integer;
+    MF_Cycle : Integer;
+
+    MF_Volume : Float;
+    MF_FinancialVolume : Float;
+
+    MF_BuyAggression : Float;
+    MF_SellAggression : Float;
+    MF_AggressionBalance : Float;
+
+begin
+
+    if not MF_Initialized then
+    begin
+        MF_Initialized := True;
+
+        MF_Ready := False;
+        MF_Error := False;
+
+        MF_CurrentBar := CurrentBar;
+        MF_LastBar := CurrentBar;
+        MF_Cycle := 0;
+
+        MF_Volume := 0;
+        MF_FinancialVolume := 0;
+
+        MF_BuyAggression := 0;
+        MF_SellAggression := 0;
+        MF_AggressionBalance := 0;
+    end;
+
+    MF_CurrentBar := CurrentBar;
+
+    MF_Volume := Volume;
+    MF_FinancialVolume := Close * Volume;
+
+    if Close > Open then
+    begin
+        MF_BuyAggression := Volume;
+        MF_SellAggression := 0;
+    end
+    else
+    begin
+        if Close < Open then
+        begin
+            MF_BuyAggression := 0;
+            MF_SellAggression := Volume;
+        end
+        else
+        begin
+            MF_BuyAggression := 0;
+            MF_SellAggression := 0;
+        end;
+    end;
+
+    MF_AggressionBalance :=
+        MF_BuyAggression - MF_SellAggression;
+
+    if MarketFlowEnabled then
+    begin
+
+        if MF_CurrentBar <> MF_LastBar then
+        begin
+            MF_Cycle := MF_Cycle + 1;
+            MF_LastBar := MF_CurrentBar;
+        end;
+
+        MF_Ready := True;
+
+    end
+    else
+    begin
+        MF_Ready := False;
+    end;
+
+    if MarketFlowDebug then
+    begin
+        Plot(MF_AggressionBalance);
+    end;
+
+end;
