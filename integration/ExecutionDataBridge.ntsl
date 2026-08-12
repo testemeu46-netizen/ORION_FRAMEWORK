@@ -1,1 +1,149 @@
+const
+    ORION_EXECUTIONBRIDGE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONBRIDGE_VERSION_MINOR = 0;
+    ORION_EXECUTIONBRIDGE_VERSION_PATCH = 0;
+    ORION_EXECUTIONBRIDGE_BUILD = 1;
 
+input
+    ExecutionBridgeEnabled(True);
+    ExecutionBridgeDebug(False);
+
+    EB_MaxContracts(3);
+    EB_PartialInput(2);
+
+var
+    EB_Initialized : Boolean;
+    EB_Ready : Boolean;
+    EB_Error : Boolean;
+    EB_Blocked : Boolean;
+
+    EB_CurrentBar : Integer;
+    EB_LastBar : Integer;
+    EB_Cycle : Integer;
+
+    EB_Decision : Integer;
+    EB_FinalScore : Float;
+
+    EB_RiskAuthorized : Boolean;
+    EB_RiskBlocked : Boolean;
+
+    EB_Contracts : Integer;
+    EB_PartialContracts : Integer;
+
+    EB_Intent : Integer;
+    EB_Authorization : Boolean;
+    EB_State : Integer;
+
+begin
+
+    if not EB_Initialized then
+    begin
+        EB_Initialized := True;
+
+        EB_Ready := False;
+        EB_Error := False;
+        EB_Blocked := True;
+
+        EB_CurrentBar := CurrentBar;
+        EB_LastBar := CurrentBar;
+        EB_Cycle := 0;
+
+        EB_Decision := 0;
+        EB_FinalScore := 0;
+
+        EB_RiskAuthorized := False;
+        EB_RiskBlocked := False;
+
+        EB_Contracts := EB_MaxContracts;
+        EB_PartialContracts := EB_PartialInput;
+
+        EB_Intent := 0;
+        EB_Authorization := False;
+        EB_State := 0;
+    end;
+
+    EB_CurrentBar := CurrentBar;
+
+    if EB_CurrentBar <> EB_LastBar then
+    begin
+        EB_Cycle := EB_Cycle + 1;
+        EB_LastBar := EB_CurrentBar;
+    end;
+
+    EB_Intent := 0;
+    EB_Authorization := False;
+    EB_Blocked := True;
+    EB_State := 0;
+
+    if ExecutionBridgeEnabled then
+    begin
+
+        EB_Ready := True;
+
+        if EB_RiskBlocked then
+        begin
+            EB_Blocked := True;
+            EB_Authorization := False;
+            EB_Intent := 0;
+            EB_State := 2;
+        end
+        else
+        begin
+
+            if not EB_RiskAuthorized then
+            begin
+                EB_Blocked := True;
+                EB_Authorization := False;
+                EB_Intent := 0;
+                EB_State := 2;
+            end
+            else
+            begin
+
+                if EB_Decision = 1 then
+                begin
+                    EB_Intent := 1;
+                    EB_Authorization := True;
+                    EB_Blocked := False;
+                    EB_State := 1;
+                end
+                else
+                begin
+
+                    if EB_Decision = -1 then
+                    begin
+                        EB_Intent := -1;
+                        EB_Authorization := True;
+                        EB_Blocked := False;
+                        EB_State := -1;
+                    end
+                    else
+                    begin
+                        EB_Intent := 0;
+                        EB_Authorization := False;
+                        EB_Blocked := False;
+                        EB_State := 0;
+                    end;
+
+                end;
+
+            end;
+
+        end;
+
+    end
+    else
+    begin
+        EB_Ready := False;
+        EB_Blocked := True;
+        EB_Authorization := False;
+        EB_Intent := 0;
+        EB_State := 2;
+    end;
+
+    if ExecutionBridgeDebug then
+    begin
+        Plot(EB_State);
+    end;
+
+end;
