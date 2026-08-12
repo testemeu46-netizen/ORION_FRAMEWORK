@@ -1,1 +1,152 @@
+const
+    ORION_DATAINTEGRITY_VERSION_MAJOR = 1;
+    ORION_DATAINTEGRITY_VERSION_MINOR = 0;
+    ORION_DATAINTEGRITY_VERSION_PATCH = 0;
+    ORION_DATAINTEGRITY_BUILD = 1;
 
+input
+    DataIntegrityEnabled(True);
+    DataIntegrityDebug(False);
+
+var
+    DI_Initialized : Boolean;
+    DI_Ready : Boolean;
+    DI_Error : Boolean;
+    DI_Blocked : Boolean;
+
+    DI_CurrentBar : Integer;
+    DI_LastBar : Integer;
+    DI_Cycle : Integer;
+
+    DI_PriceValid : Boolean;
+    DI_VolumeValid : Boolean;
+    DI_BarValid : Boolean;
+    DI_DataValid : Boolean;
+
+    DI_Price : Float;
+    DI_Volume : Float;
+
+    DI_EntryAllowed : Boolean;
+    DI_SignalAllowed : Boolean;
+    DI_ExecutionAllowed : Boolean;
+
+    DI_State : Integer;
+
+begin
+
+    if not DI_Initialized then
+    begin
+        DI_Initialized := True;
+
+        DI_Ready := False;
+        DI_Error := False;
+        DI_Blocked := False;
+
+        DI_CurrentBar := CurrentBar;
+        DI_LastBar := CurrentBar;
+        DI_Cycle := 0;
+
+        DI_PriceValid := False;
+        DI_VolumeValid := False;
+        DI_BarValid := False;
+        DI_DataValid := False;
+
+        DI_Price := 0;
+        DI_Volume := 0;
+
+        DI_EntryAllowed := False;
+        DI_SignalAllowed := False;
+        DI_ExecutionAllowed := False;
+
+        DI_State := 0;
+    end;
+
+    DI_CurrentBar := CurrentBar;
+
+    if DataIntegrityEnabled then
+    begin
+
+        if DI_CurrentBar <> DI_LastBar then
+        begin
+            DI_Cycle := DI_Cycle + 1;
+            DI_LastBar := DI_CurrentBar;
+        end;
+
+        DI_Error := False;
+        DI_Blocked := False;
+
+        DI_Price := Close;
+        DI_Volume := Volume;
+
+        DI_PriceValid := False;
+        DI_VolumeValid := False;
+        DI_BarValid := False;
+        DI_DataValid := False;
+
+        if DI_Price > 0 then
+        begin
+            DI_PriceValid := True;
+        end;
+
+        if DI_Volume >= 0 then
+        begin
+            DI_VolumeValid := True;
+        end;
+
+        if DI_CurrentBar > 0 then
+        begin
+            DI_BarValid := True;
+        end;
+
+        if DI_PriceValid and DI_VolumeValid then
+        begin
+            if DI_BarValid then
+            begin
+                DI_DataValid := True;
+            end;
+        end;
+
+        if not DI_DataValid then
+        begin
+            DI_Error := True;
+            DI_Blocked := True;
+
+            DI_EntryAllowed := False;
+            DI_SignalAllowed := False;
+            DI_ExecutionAllowed := False;
+
+            DI_State := 2;
+        end
+        else
+        begin
+            DI_Blocked := False;
+
+            DI_EntryAllowed := True;
+            DI_SignalAllowed := True;
+            DI_ExecutionAllowed := False;
+
+            DI_State := 1;
+        end;
+
+        DI_Ready := True;
+
+    end
+    else
+    begin
+        DI_Ready := False;
+        DI_Error := False;
+        DI_Blocked := True;
+
+        DI_EntryAllowed := False;
+        DI_SignalAllowed := False;
+        DI_ExecutionAllowed := False;
+
+        DI_State := 2;
+    end;
+
+    if DataIntegrityDebug then
+    begin
+        Plot(DI_State);
+    end;
+
+end;
