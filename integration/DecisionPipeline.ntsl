@@ -1,1 +1,125 @@
+const
+    ORION_DECISIONPIPELINE_VERSION_MAJOR = 1;
+    ORION_DECISIONPIPELINE_VERSION_MINOR = 0;
+    ORION_DECISIONPIPELINE_VERSION_PATCH = 0;
+    ORION_DECISIONPIPELINE_BUILD = 1;
 
+input
+    DecisionPipelineEnabled(True);
+    DecisionPipelineDebug(False);
+
+var
+    DP_Initialized : Boolean;
+    DP_Ready : Boolean;
+    DP_Error : Boolean;
+    DP_Blocked : Boolean;
+
+    DP_CurrentBar : Integer;
+    DP_LastBar : Integer;
+    DP_Cycle : Integer;
+
+    DP_Signal : Integer;
+    DP_TrendDirection : Integer;
+    DP_Confidence : Float;
+
+    DP_RiskAuthorized : Boolean;
+
+    DP_Decision : Integer;
+    DP_FinalScore : Float;
+    DP_State : Integer;
+
+begin
+
+    if not DP_Initialized then
+    begin
+        DP_Initialized := True;
+
+        DP_Ready := False;
+        DP_Error := False;
+        DP_Blocked := False;
+
+        DP_CurrentBar := CurrentBar;
+        DP_LastBar := CurrentBar;
+        DP_Cycle := 0;
+
+        DP_Signal := 0;
+        DP_TrendDirection := 0;
+        DP_Confidence := 0;
+
+        DP_RiskAuthorized := False;
+
+        DP_Decision := 0;
+        DP_FinalScore := 0;
+        DP_State := 0;
+    end;
+
+    DP_CurrentBar := CurrentBar;
+
+    if DecisionPipelineEnabled then
+    begin
+
+        if DP_CurrentBar <> DP_LastBar then
+        begin
+            DP_Cycle := DP_Cycle + 1;
+            DP_LastBar := DP_CurrentBar;
+        end;
+
+        DP_Signal := 0;
+        DP_TrendDirection := 0;
+        DP_Confidence := 0;
+
+        DP_RiskAuthorized := True;
+
+        if DP_RiskAuthorized then
+        begin
+
+            if (DP_Signal = 1) and
+               (DP_TrendDirection = 1) then
+            begin
+                DP_Decision := 1;
+                DP_FinalScore := DP_Confidence;
+                DP_State := 1;
+            end
+            else
+            begin
+                if (DP_Signal = -1) and
+                   (DP_TrendDirection = -1) then
+                begin
+                    DP_Decision := -1;
+                    DP_FinalScore := DP_Confidence;
+                    DP_State := -1;
+                end
+                else
+                begin
+                    DP_Decision := 0;
+                    DP_FinalScore := 0;
+                    DP_State := 0;
+                end;
+            end;
+
+        end
+        else
+        begin
+            DP_Decision := 2;
+            DP_FinalScore := 0;
+            DP_State := 2;
+            DP_Blocked := True;
+        end;
+
+        DP_Ready := True;
+
+    end
+    else
+    begin
+        DP_Ready := False;
+        DP_Decision := 0;
+        DP_FinalScore := 0;
+        DP_State := 0;
+    end;
+
+    if DecisionPipelineDebug then
+    begin
+        Plot(DP_Decision);
+    end;
+
+end;
