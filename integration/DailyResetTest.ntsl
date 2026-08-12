@@ -1,1 +1,127 @@
+const
+    ORION_DAILYRESET_VERSION_MAJOR = 1;
+    ORION_DAILYRESET_VERSION_MINOR = 0;
+    ORION_DAILYRESET_VERSION_PATCH = 0;
+    ORION_DAILYRESET_BUILD = 1;
 
+input
+    DailyResetEnabled(True);
+    DailyResetDebug(False);
+
+    DR_StopFinancial(300);
+    DR_TargetFinancial(1000);
+
+var
+    DR_Initialized : Boolean;
+    DR_Ready : Boolean;
+    DR_Error : Boolean;
+    DR_Blocked : Boolean;
+
+    DR_CurrentBar : Integer;
+    DR_LastBar : Integer;
+    DR_Cycle : Integer;
+
+    DR_DailyResult : Float;
+    DR_PreviousResult : Float;
+
+    DR_StopReached : Boolean;
+    DR_TargetReached : Boolean;
+
+    DR_DayState : Integer;
+    DR_EntryAllowed : Boolean;
+
+    DR_ExecutionAllowed : Boolean;
+
+begin
+
+    if not DR_Initialized then
+    begin
+        DR_Initialized := True;
+
+        DR_Ready := False;
+        DR_Error := False;
+        DR_Blocked := False;
+
+        DR_CurrentBar := CurrentBar;
+        DR_LastBar := CurrentBar;
+        DR_Cycle := 0;
+
+        DR_DailyResult := 0;
+        DR_PreviousResult := 0;
+
+        DR_StopReached := False;
+        DR_TargetReached := False;
+
+        DR_DayState := 0;
+        DR_EntryAllowed := False;
+
+        DR_ExecutionAllowed := False;
+    end;
+
+    DR_CurrentBar := CurrentBar;
+
+    if DailyResetEnabled then
+    begin
+
+        if DR_CurrentBar <> DR_LastBar then
+        begin
+            DR_Cycle := DR_Cycle + 1;
+            DR_LastBar := DR_CurrentBar;
+        end;
+
+        DR_PreviousResult := DR_DailyResult;
+
+        DR_StopReached := False;
+        DR_TargetReached := False;
+        DR_Blocked := False;
+
+        if DR_DailyResult <= -DR_StopFinancial then
+        begin
+            DR_StopReached := True;
+        end;
+
+        if DR_DailyResult >= DR_TargetFinancial then
+        begin
+            DR_TargetReached := True;
+        end;
+
+        if DR_StopReached then
+        begin
+            DR_Blocked := True;
+        end;
+
+        if DR_TargetReached then
+        begin
+            DR_Blocked := True;
+        end;
+
+        if DR_Blocked then
+        begin
+            DR_EntryAllowed := False;
+            DR_DayState := 2;
+        end
+        else
+        begin
+            DR_EntryAllowed := True;
+            DR_DayState := 1;
+        end;
+
+        DR_Ready := True;
+        DR_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        DR_Ready := False;
+        DR_Blocked := True;
+        DR_EntryAllowed := False;
+        DR_DayState := 2;
+        DR_ExecutionAllowed := False;
+    end;
+
+    if DailyResetDebug then
+    begin
+        Plot(DR_DayState);
+    end;
+
+end;
