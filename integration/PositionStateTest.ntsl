@@ -1,1 +1,171 @@
+const
+    ORION_POSITIONTEST_VERSION_MAJOR = 1;
+    ORION_POSITIONTEST_VERSION_MINOR = 0;
+    ORION_POSITIONTEST_VERSION_PATCH = 0;
+    ORION_POSITIONTEST_BUILD = 1;
 
+input
+    PositionTestEnabled(True);
+    PositionTestDebug(False);
+
+    PT_MaxContracts(3);
+    PT_PartialInput(2);
+
+var
+    PT_Initialized : Boolean;
+    PT_Ready : Boolean;
+    PT_Error : Boolean;
+
+    PT_CurrentBar : Integer;
+    PT_LastBar : Integer;
+    PT_Cycle : Integer;
+
+    PT_Position : Integer;
+    PT_EntryDirection : Integer;
+
+    PT_Contracts : Integer;
+    PT_PartialContracts : Integer;
+    PT_RemainingContracts : Integer;
+
+    PT_EntryAllowed : Boolean;
+    PT_PartialAllowed : Boolean;
+    PT_ExitAllowed : Boolean;
+
+    PT_State : Integer;
+    PT_ExecutionAllowed : Boolean;
+
+begin
+
+    if not PT_Initialized then
+    begin
+        PT_Initialized := True;
+
+        PT_Ready := False;
+        PT_Error := False;
+
+        PT_CurrentBar := CurrentBar;
+        PT_LastBar := CurrentBar;
+        PT_Cycle := 0;
+
+        PT_Position := 0;
+        PT_EntryDirection := 0;
+
+        PT_Contracts := PT_MaxContracts;
+        PT_PartialContracts := PT_PartialInput;
+        PT_RemainingContracts := 0;
+
+        PT_EntryAllowed := True;
+        PT_PartialAllowed := False;
+        PT_ExitAllowed := False;
+
+        PT_State := 0;
+        PT_ExecutionAllowed := False;
+    end;
+
+    PT_CurrentBar := CurrentBar;
+
+    if PositionTestEnabled then
+    begin
+
+        if PT_CurrentBar <> PT_LastBar then
+        begin
+            PT_Cycle := PT_Cycle + 1;
+            PT_LastBar := PT_CurrentBar;
+        end;
+
+        PT_Error := False;
+
+        if PT_Position = 0 then
+        begin
+            PT_State := 0;
+
+            PT_EntryAllowed := True;
+            PT_PartialAllowed := False;
+            PT_ExitAllowed := False;
+
+            PT_RemainingContracts := 0;
+        end
+        else
+        begin
+
+            PT_EntryAllowed := False;
+            PT_ExitAllowed := True;
+
+            if PT_Position = PT_Contracts then
+            begin
+                PT_State := 1;
+                PT_PartialAllowed := True;
+                PT_RemainingContracts :=
+                    PT_Contracts;
+            end
+            else
+            begin
+
+                if PT_Position > 0 then
+                begin
+                    if PT_Position < PT_Contracts then
+                    begin
+                        PT_State := 2;
+                        PT_PartialAllowed := False;
+                        PT_RemainingContracts :=
+                            PT_Position;
+                    end
+                    else
+                    begin
+                        PT_Error := True;
+                        PT_State := 3;
+                    end;
+                end
+                else
+                begin
+                    PT_Error := True;
+                    PT_State := 3;
+                end;
+
+            end;
+
+        end;
+
+        if PT_PartialAllowed then
+        begin
+            if PT_PartialContracts >= PT_Position then
+            begin
+                PT_Error := True;
+                PT_State := 3;
+            end;
+        end;
+
+        if PT_Error then
+        begin
+            PT_Ready := False;
+            PT_EntryAllowed := False;
+            PT_PartialAllowed := False;
+            PT_ExitAllowed := False;
+        end
+        else
+        begin
+            PT_Ready := True;
+        end;
+
+        PT_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        PT_Ready := False;
+        PT_Error := False;
+        PT_State := 0;
+
+        PT_EntryAllowed := False;
+        PT_PartialAllowed := False;
+        PT_ExitAllowed := False;
+
+        PT_ExecutionAllowed := False;
+    end;
+
+    if PositionTestDebug then
+    begin
+        Plot(PT_State);
+    end;
+
+end;
