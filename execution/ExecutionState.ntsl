@@ -1,1 +1,134 @@
+const
+    ORION_EXECUTIONSTATE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONSTATE_VERSION_MINOR = 0;
+    ORION_EXECUTIONSTATE_VERSION_PATCH = 0;
+    ORION_EXECUTIONSTATE_BUILD = 1;
 
+input
+    ExecutionStateEnabled(True);
+    ExecutionStateDebug(False);
+
+var
+    ES_Initialized : Boolean;
+    ES_Ready : Boolean;
+    ES_Error : Boolean;
+    ES_Blocked : Boolean;
+
+    ES_CurrentBar : Integer;
+    ES_LastBar : Integer;
+    ES_Cycle : Integer;
+
+    ES_State : Integer;
+    ES_PreviousState : Integer;
+    ES_Transitions : Integer;
+
+    ES_Decision : Integer;
+    ES_ExecutionAuthorized : Boolean;
+
+    ES_Contracts : Integer;
+    ES_ExecutedContracts : Integer;
+    ES_RemainingContracts : Integer;
+
+    ES_PartialContracts : Integer;
+
+begin
+
+    if not ES_Initialized then
+    begin
+        ES_Initialized := True;
+
+        ES_Ready := False;
+        ES_Error := False;
+        ES_Blocked := True;
+
+        ES_CurrentBar := CurrentBar;
+        ES_LastBar := CurrentBar;
+        ES_Cycle := 0;
+
+        ES_State := 0;
+        ES_PreviousState := 0;
+        ES_Transitions := 0;
+
+        ES_Decision := 0;
+        ES_ExecutionAuthorized := False;
+
+        ES_Contracts := 3;
+        ES_ExecutedContracts := 0;
+        ES_RemainingContracts := 3;
+
+        ES_PartialContracts := 2;
+    end;
+
+    ES_CurrentBar := CurrentBar;
+
+    if ES_CurrentBar <> ES_LastBar then
+    begin
+        ES_Cycle := ES_Cycle + 1;
+        ES_LastBar := ES_CurrentBar;
+    end;
+
+    if ExecutionStateEnabled then
+    begin
+
+        ES_Ready := True;
+
+        ES_PreviousState := ES_State;
+
+        if not ES_ExecutionAuthorized then
+        begin
+            ES_State := 0;
+            ES_Blocked := True;
+        end
+        else
+        begin
+
+            if ES_Decision = 0 then
+            begin
+                ES_State := 0;
+                ES_Blocked := False;
+            end
+            else
+            begin
+                if ES_ExecutedContracts = 0 then
+                begin
+                    ES_State := 1;
+                    ES_Blocked := False;
+                end
+                else
+                begin
+                    if ES_ExecutedContracts <
+                       ES_Contracts then
+                    begin
+                        ES_State := 3;
+                        ES_Blocked := False;
+                    end
+                    else
+                    begin
+                        ES_State := 2;
+                        ES_Blocked := False;
+                    end;
+                end;
+            end;
+
+        end;
+
+        if ES_State <> ES_PreviousState then
+            ES_Transitions := ES_Transitions + 1;
+
+        ES_RemainingContracts :=
+            ES_Contracts - ES_ExecutedContracts;
+
+    end
+    else
+    begin
+        ES_Ready := False;
+        ES_Blocked := True;
+        ES_State := 5;
+    end;
+
+    if ExecutionStateDebug then
+    begin
+        Plot(ES_State);
+    end;
+
+end;
