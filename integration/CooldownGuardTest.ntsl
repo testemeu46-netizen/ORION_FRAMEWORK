@@ -1,1 +1,148 @@
+const
+    ORION_COOLDOWN_VERSION_MAJOR = 1;
+    ORION_COOLDOWN_VERSION_MINOR = 0;
+    ORION_COOLDOWN_VERSION_PATCH = 0;
+    ORION_COOLDOWN_BUILD = 1;
 
+input
+    CooldownGuardEnabled(True);
+    CooldownGuardDebug(False);
+
+    CD_CooldownBars(3);
+
+var
+    CD_Initialized : Boolean;
+    CD_Ready : Boolean;
+    CD_Error : Boolean;
+    CD_Blocked : Boolean;
+
+    CD_CurrentBar : Integer;
+    CD_LastBar : Integer;
+    CD_Cycle : Integer;
+
+    CD_LastEntryBar : Integer;
+    CD_LastExitBar : Integer;
+
+    CD_Position : Integer;
+    CD_Signal : Integer;
+
+    CD_BarsSinceExit : Integer;
+
+    CD_EntryAllowed : Boolean;
+    CD_CooldownActive : Boolean;
+
+    CD_State : Integer;
+    CD_ExecutionAllowed : Boolean;
+
+begin
+
+    if not CD_Initialized then
+    begin
+        CD_Initialized := True;
+
+        CD_Ready := False;
+        CD_Error := False;
+        CD_Blocked := False;
+
+        CD_CurrentBar := CurrentBar;
+        CD_LastBar := CurrentBar;
+        CD_Cycle := 0;
+
+        CD_LastEntryBar := -1;
+        CD_LastExitBar := -1;
+
+        CD_Position := 0;
+        CD_Signal := 0;
+
+        CD_BarsSinceExit := 0;
+
+        CD_EntryAllowed := False;
+        CD_CooldownActive := False;
+
+        CD_State := 0;
+        CD_ExecutionAllowed := False;
+    end;
+
+    CD_CurrentBar := CurrentBar;
+
+    if CooldownGuardEnabled then
+    begin
+
+        if CD_CurrentBar <> CD_LastBar then
+        begin
+            CD_Cycle := CD_Cycle + 1;
+            CD_LastBar := CD_CurrentBar;
+        end;
+
+        CD_Error := False;
+        CD_Blocked := False;
+        CD_CooldownActive := False;
+        CD_EntryAllowed := False;
+
+        if CD_LastExitBar >= 0 then
+        begin
+            CD_BarsSinceExit :=
+                CD_CurrentBar - CD_LastExitBar;
+        end
+        else
+        begin
+            CD_BarsSinceExit := CD_CooldownBars;
+        end;
+
+        if CD_Position <> 0 then
+        begin
+            CD_Blocked := True;
+            CD_State := 2;
+        end
+        else
+        begin
+
+            if CD_LastExitBar >= 0 then
+            begin
+                if CD_BarsSinceExit < CD_CooldownBars then
+                begin
+                    CD_CooldownActive := True;
+                    CD_Blocked := True;
+                    CD_State := 2;
+                end
+                else
+                begin
+                    CD_CooldownActive := False;
+                end;
+            end;
+
+            if not CD_Blocked then
+            begin
+                if CD_Signal <> 0 then
+                begin
+                    CD_EntryAllowed := True;
+                    CD_State := 1;
+                end
+                else
+                begin
+                    CD_State := 0;
+                end;
+            end;
+
+        end;
+
+        CD_Ready := True;
+        CD_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        CD_Ready := False;
+        CD_Blocked := True;
+        CD_CooldownActive := False;
+        CD_EntryAllowed := False;
+        CD_State := 2;
+        CD_ExecutionAllowed := False;
+    end;
+
+    if CooldownGuardDebug then
+    begin
+        Plot(CD_State);
+    end;
+
+end;
