@@ -1,1 +1,117 @@
+const
+    ORION_EXECUTIONPERMISSION_VERSION_MAJOR = 1;
+    ORION_EXECUTIONPERMISSION_VERSION_MINOR = 0;
+    ORION_EXECUTIONPERMISSION_VERSION_PATCH = 0;
+    ORION_EXECUTIONPERMISSION_VERSION_BUILD = 1;
 
+input
+    ExecutionPermissionGuardEnabled(True);
+    ExecutionPermissionGuardDebug(False);
+
+var
+    EP_Initialized : Boolean;
+    EP_Ready : Boolean;
+    EP_Error : Boolean;
+    EP_Blocked : Boolean;
+
+    EP_DecisionAllowed : Boolean;
+    EP_EntryAllowed : Boolean;
+    EP_RiskApproved : Boolean;
+    EP_QuantityApproved : Boolean;
+    EP_ProtectionApproved : Boolean;
+    EP_DuplicateFree : Boolean;
+
+    EP_PermissionValid : Boolean;
+    EP_ExecutionAllowed : Boolean;
+
+    EP_State : Integer;
+
+begin
+
+    if not EP_Initialized then
+    begin
+        EP_Initialized := True;
+
+        EP_Ready := False;
+        EP_Error := False;
+        EP_Blocked := False;
+
+        EP_DecisionAllowed := False;
+        EP_EntryAllowed := False;
+        EP_RiskApproved := False;
+        EP_QuantityApproved := False;
+        EP_ProtectionApproved := False;
+        EP_DuplicateFree := False;
+
+        EP_PermissionValid := False;
+        EP_ExecutionAllowed := False;
+
+        EP_State := 0;
+    end;
+
+    if ExecutionPermissionGuardEnabled then
+    begin
+
+        EP_Error := False;
+        EP_Blocked := False;
+        EP_PermissionValid := False;
+
+        if EP_DecisionAllowed then
+        begin
+            if EP_EntryAllowed then
+            begin
+                if EP_RiskApproved then
+                begin
+                    if EP_QuantityApproved then
+                    begin
+                        if EP_ProtectionApproved then
+                        begin
+                            if EP_DuplicateFree then
+                            begin
+                                EP_PermissionValid := True;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if EP_PermissionValid then
+        begin
+            EP_Error := False;
+            EP_Blocked := False;
+
+            EP_State := 1;
+
+            EP_ExecutionAllowed := False;
+        end
+        else
+        begin
+            EP_Error := True;
+            EP_Blocked := True;
+
+            EP_State := 2;
+
+            EP_ExecutionAllowed := False;
+        end;
+
+        EP_Ready := True;
+
+    end
+    else
+    begin
+        EP_Ready := False;
+        EP_Blocked := True;
+
+        EP_PermissionValid := False;
+        EP_ExecutionAllowed := False;
+
+        EP_State := 2;
+    end;
+
+    if ExecutionPermissionGuardDebug then
+    begin
+        Plot(EP_State);
+    end;
+
+end;
