@@ -1,1 +1,164 @@
+const
+    ORION_SIGNALCONSISTENCY_VERSION_MAJOR = 1;
+    ORION_SIGNALCONSISTENCY_VERSION_MINOR = 0;
+    ORION_SIGNALCONSISTENCY_VERSION_PATCH = 0;
+    ORION_SIGNALCONSISTENCY_BUILD = 1;
 
+input
+    SignalConsistencyEnabled(True);
+    SignalConsistencyDebug(False);
+
+var
+    SC_Initialized : Boolean;
+    SC_Ready : Boolean;
+    SC_Error : Boolean;
+    SC_Blocked : Boolean;
+
+    SC_CurrentBar : Integer;
+    SC_LastBar : Integer;
+    SC_Cycle : Integer;
+
+    SC_TrendDirection : Integer;
+    SC_Signal : Integer;
+
+    SC_TrendValid : Boolean;
+    SC_SignalValid : Boolean;
+    SC_Consistent : Boolean;
+
+    SC_EntryAllowed : Boolean;
+    SC_DecisionAllowed : Boolean;
+    SC_ExecutionAllowed : Boolean;
+
+    SC_State : Integer;
+
+begin
+
+    if not SC_Initialized then
+    begin
+        SC_Initialized := True;
+
+        SC_Ready := False;
+        SC_Error := False;
+        SC_Blocked := False;
+
+        SC_CurrentBar := CurrentBar;
+        SC_LastBar := CurrentBar;
+        SC_Cycle := 0;
+
+        SC_TrendDirection := 0;
+        SC_Signal := 0;
+
+        SC_TrendValid := False;
+        SC_SignalValid := False;
+        SC_Consistent := False;
+
+        SC_EntryAllowed := False;
+        SC_DecisionAllowed := False;
+        SC_ExecutionAllowed := False;
+
+        SC_State := 0;
+    end;
+
+    SC_CurrentBar := CurrentBar;
+
+    if SignalConsistencyEnabled then
+    begin
+
+        if SC_CurrentBar <> SC_LastBar then
+        begin
+            SC_Cycle := SC_Cycle + 1;
+            SC_LastBar := SC_CurrentBar;
+        end;
+
+        SC_Error := False;
+        SC_Blocked := False;
+
+        SC_TrendValid := False;
+        SC_SignalValid := False;
+        SC_Consistent := False;
+
+        if SC_TrendDirection >= -1 then
+        begin
+            if SC_TrendDirection <= 1 then
+            begin
+                SC_TrendValid := True;
+            end;
+        end;
+
+        if SC_Signal >= -1 then
+        begin
+            if SC_Signal <= 1 then
+            begin
+                SC_SignalValid := True;
+            end;
+        end;
+
+        if SC_TrendValid and SC_SignalValid then
+        begin
+
+            if SC_Signal = 0 then
+            begin
+                SC_Consistent := True;
+            end;
+
+            if SC_TrendDirection = 1 then
+            begin
+                if SC_Signal = 1 then
+                begin
+                    SC_Consistent := True;
+                end;
+            end;
+
+            if SC_TrendDirection = -1 then
+            begin
+                if SC_Signal = -1 then
+                begin
+                    SC_Consistent := True;
+                end;
+            end;
+
+        end;
+
+        if not SC_Consistent then
+        begin
+            SC_Error := True;
+            SC_Blocked := True;
+
+            SC_EntryAllowed := False;
+            SC_DecisionAllowed := False;
+            SC_ExecutionAllowed := False;
+
+            SC_State := 2;
+        end
+        else
+        begin
+            SC_Blocked := False;
+
+            SC_EntryAllowed := True;
+            SC_DecisionAllowed := True;
+            SC_ExecutionAllowed := False;
+
+            SC_State := 1;
+        end;
+
+        SC_Ready := True;
+
+    end
+    else
+    begin
+        SC_Ready := False;
+        SC_Blocked := True;
+
+        SC_EntryAllowed := False;
+        SC_DecisionAllowed := False;
+        SC_ExecutionAllowed := False;
+
+        SC_State := 2;
+    end;
+
+    if SignalConsistencyDebug then
+    begin
+        Plot(SC_State);
+    end;
+
+end;
