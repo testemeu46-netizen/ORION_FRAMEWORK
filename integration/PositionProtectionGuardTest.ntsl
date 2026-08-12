@@ -1,1 +1,144 @@
+const
+    ORION_POSITIONPROTECTION_VERSION_MAJOR = 1;
+    ORION_POSITIONPROTECTION_VERSION_MINOR = 0;
+    ORION_POSITIONPROTECTION_VERSION_PATCH = 0;
+    ORION_POSITIONPROTECTION_VERSION_BUILD = 1;
 
+input
+    PositionProtectionGuardEnabled(True);
+    PositionProtectionGuardDebug(False);
+
+    PP_MinStopPoints(1);
+    PP_MinTargetPoints(1);
+
+var
+    PP_Initialized : Boolean;
+    PP_Ready : Boolean;
+    PP_Error : Boolean;
+    PP_Blocked : Boolean;
+
+    PP_Position : Integer;
+    PP_StopPoints : Float;
+    PP_TargetPoints : Float;
+
+    PP_PositionValid : Boolean;
+    PP_StopValid : Boolean;
+    PP_TargetValid : Boolean;
+    PP_ProtectionValid : Boolean;
+
+    PP_DecisionAllowed : Boolean;
+    PP_PositionProtected : Boolean;
+    PP_ExecutionAllowed : Boolean;
+
+    PP_State : Integer;
+
+begin
+
+    if not PP_Initialized then
+    begin
+        PP_Initialized := True;
+
+        PP_Ready := False;
+        PP_Error := False;
+        PP_Blocked := False;
+
+        PP_Position := 0;
+        PP_StopPoints := 0;
+        PP_TargetPoints := 0;
+
+        PP_PositionValid := False;
+        PP_StopValid := False;
+        PP_TargetValid := False;
+        PP_ProtectionValid := False;
+
+        PP_DecisionAllowed := False;
+        PP_PositionProtected := False;
+        PP_ExecutionAllowed := False;
+
+        PP_State := 0;
+    end;
+
+    if PositionProtectionGuardEnabled then
+    begin
+
+        PP_Error := False;
+        PP_Blocked := False;
+
+        PP_PositionValid := False;
+        PP_StopValid := False;
+        PP_TargetValid := False;
+        PP_ProtectionValid := False;
+
+        if PP_Position >= -1 then
+        begin
+            if PP_Position <= 1 then
+            begin
+                PP_PositionValid := True;
+            end;
+        end;
+
+        if PP_StopPoints >= PP_MinStopPoints then
+        begin
+            PP_StopValid := True;
+        end;
+
+        if PP_TargetPoints >= PP_MinTargetPoints then
+        begin
+            PP_TargetValid := True;
+        end;
+
+        if PP_PositionValid then
+        begin
+            if PP_Position <> 0 then
+            begin
+                if PP_StopValid then
+                begin
+                    if PP_TargetValid then
+                    begin
+                        PP_ProtectionValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if PP_ProtectionValid then
+        begin
+            PP_DecisionAllowed := True;
+            PP_PositionProtected := True;
+            PP_Blocked := False;
+
+            PP_State := 1;
+        end
+        else
+        begin
+            PP_Error := True;
+            PP_Blocked := True;
+
+            PP_DecisionAllowed := False;
+            PP_PositionProtected := False;
+
+            PP_State := 2;
+        end;
+
+        PP_Ready := True;
+        PP_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        PP_Ready := False;
+        PP_Blocked := True;
+
+        PP_DecisionAllowed := False;
+        PP_PositionProtected := False;
+        PP_ExecutionAllowed := False;
+
+        PP_State := 2;
+    end;
+
+    if PositionProtectionGuardDebug then
+    begin
+        Plot(PP_State);
+    end;
+
+end;
