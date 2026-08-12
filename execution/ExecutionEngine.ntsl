@@ -7,9 +7,8 @@ const
 input
     ExecutionEngineEnabled(False);
     ExecutionEngineDebug(False);
-
     EE_MaxContracts(3);
-    EE_PartialContracts(2);
+    EE_PartialInput(2);
 
 var
     EE_Initialized : Boolean;
@@ -53,7 +52,7 @@ begin
         EE_ControlAuthorized := False;
 
         EE_Contracts := EE_MaxContracts;
-        EE_PartialContracts := 2;
+        EE_PartialContracts := EE_PartialInput;
 
         EE_Intent := 0;
         EE_State := 0;
@@ -92,6 +91,7 @@ begin
             end
             else
             begin
+
                 if EE_Decision = -1 then
                 begin
                     EE_Intent := -1;
@@ -105,6 +105,7 @@ begin
                     EE_State := 0;
                     EE_Blocked := False;
                 end;
+
             end;
 
         end
