@@ -1,1 +1,136 @@
+const
+    ORION_ORDERQUANTITY_VERSION_MAJOR = 1;
+    ORION_ORDERQUANTITY_VERSION_MINOR = 0;
+    ORION_ORDERQUANTITY_VERSION_PATCH = 0;
+    ORION_ORDERQUANTITY_VERSION_BUILD = 1;
 
+input
+    OrderQuantityGuardEnabled(True);
+    OrderQuantityGuardDebug(False);
+
+    OQ_TotalContracts(3);
+    OQ_PartialContracts(2);
+
+var
+    OQ_Initialized : Boolean;
+    OQ_Ready : Boolean;
+    OQ_Error : Boolean;
+    OQ_Blocked : Boolean;
+
+    OQ_Total : Integer;
+    OQ_Partial : Integer;
+    OQ_Remaining : Integer;
+
+    OQ_TotalValid : Boolean;
+    OQ_PartialValid : Boolean;
+    OQ_QuantityValid : Boolean;
+
+    OQ_DecisionAllowed : Boolean;
+    OQ_EntryAllowed : Boolean;
+    OQ_ExecutionAllowed : Boolean;
+
+    OQ_State : Integer;
+
+begin
+
+    if not OQ_Initialized then
+    begin
+        OQ_Initialized := True;
+
+        OQ_Ready := False;
+        OQ_Error := False;
+        OQ_Blocked := False;
+
+        OQ_Total := OQ_TotalContracts;
+        OQ_Partial := OQ_PartialContracts;
+        OQ_Remaining := 0;
+
+        OQ_TotalValid := False;
+        OQ_PartialValid := False;
+        OQ_QuantityValid := False;
+
+        OQ_DecisionAllowed := False;
+        OQ_EntryAllowed := False;
+        OQ_ExecutionAllowed := False;
+
+        OQ_State := 0;
+    end;
+
+    if OrderQuantityGuardEnabled then
+    begin
+
+        OQ_Error := False;
+        OQ_Blocked := False;
+
+        OQ_TotalValid := False;
+        OQ_PartialValid := False;
+        OQ_QuantityValid := False;
+
+        OQ_Total := OQ_TotalContracts;
+        OQ_Partial := OQ_PartialContracts;
+
+        if OQ_Total > 0 then
+        begin
+            OQ_TotalValid := True;
+        end;
+
+        if OQ_Partial >= 0 then
+        begin
+            if OQ_Partial < OQ_Total then
+            begin
+                OQ_PartialValid := True;
+            end;
+        end;
+
+        if OQ_TotalValid and OQ_PartialValid then
+        begin
+            OQ_Remaining := OQ_Total - OQ_Partial;
+
+            if OQ_Remaining > 0 then
+            begin
+                OQ_QuantityValid := True;
+            end;
+        end;
+
+        if OQ_QuantityValid then
+        begin
+            OQ_DecisionAllowed := True;
+            OQ_EntryAllowed := True;
+            OQ_Blocked := False;
+
+            OQ_State := 1;
+        end
+        else
+        begin
+            OQ_Error := True;
+            OQ_Blocked := True;
+
+            OQ_DecisionAllowed := False;
+            OQ_EntryAllowed := False;
+
+            OQ_State := 2;
+        end;
+
+        OQ_Ready := True;
+
+        OQ_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        OQ_Ready := False;
+        OQ_Blocked := True;
+
+        OQ_DecisionAllowed := False;
+        OQ_EntryAllowed := False;
+        OQ_ExecutionAllowed := False;
+
+        OQ_State := 2;
+    end;
+
+    if OrderQuantityGuardDebug then
+    begin
+        Plot(OQ_State);
+    end;
+
+end;
