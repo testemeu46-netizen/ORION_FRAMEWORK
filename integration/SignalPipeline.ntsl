@@ -1,1 +1,147 @@
+const
+    ORION_SIGNALPIPELINE_VERSION_MAJOR = 1;
+    ORION_SIGNALPIPELINE_VERSION_MINOR = 0;
+    ORION_SIGNALPIPELINE_VERSION_PATCH = 0;
+    ORION_SIGNALPIPELINE_BUILD = 1;
 
+input
+    SignalPipelineEnabled(True);
+    SignalPipelineDebug(False);
+
+var
+    SP_Initialized : Boolean;
+    SP_Ready : Boolean;
+    SP_Error : Boolean;
+
+    SP_CurrentBar : Integer;
+    SP_LastBar : Integer;
+    SP_Cycle : Integer;
+
+    SP_TrendDirection : Integer;
+    SP_TrendScore : Float;
+    SP_TrendStrength : Float;
+
+    SP_AggressionBalance : Float;
+    SP_Volume : Float;
+
+    SP_Signal : Integer;
+    SP_Confidence : Float;
+    SP_State : Integer;
+
+begin
+
+    if not SP_Initialized then
+    begin
+        SP_Initialized := True;
+
+        SP_Ready := False;
+        SP_Error := False;
+
+        SP_CurrentBar := CurrentBar;
+        SP_LastBar := CurrentBar;
+        SP_Cycle := 0;
+
+        SP_TrendDirection := 0;
+        SP_TrendScore := 0;
+        SP_TrendStrength := 0;
+
+        SP_AggressionBalance := 0;
+        SP_Volume := 0;
+
+        SP_Signal := 0;
+        SP_Confidence := 0;
+        SP_State := 0;
+    end;
+
+    SP_CurrentBar := CurrentBar;
+
+    SP_Volume := Volume;
+
+    if Close > Open then
+    begin
+        SP_AggressionBalance := SP_Volume;
+    end
+    else
+    begin
+        if Close < Open then
+        begin
+            SP_AggressionBalance := -SP_Volume;
+        end
+        else
+        begin
+            SP_AggressionBalance := 0;
+        end;
+    end;
+
+    SP_TrendScore :=
+        MediaExp(9, Close) - MediaExp(21, Close);
+
+    SP_TrendStrength :=
+        Abs(SP_TrendScore);
+
+    if SP_TrendScore > 0 then
+    begin
+        SP_TrendDirection := 1;
+    end
+    else
+    begin
+        if SP_TrendScore < 0 then
+        begin
+            SP_TrendDirection := -1;
+        end
+        else
+        begin
+            SP_TrendDirection := 0;
+        end;
+    end;
+
+    SP_Signal := 0;
+    SP_Confidence := 0;
+    SP_State := 0;
+
+    if SP_TrendDirection = 1 then
+    begin
+        if SP_AggressionBalance > 0 then
+        begin
+            SP_Signal := 1;
+            SP_Confidence := 100;
+            SP_State := 1;
+        end;
+    end;
+
+    if SP_TrendDirection = -1 then
+    begin
+        if SP_AggressionBalance < 0 then
+        begin
+            SP_Signal := -1;
+            SP_Confidence := 100;
+            SP_State := -1;
+        end;
+    end;
+
+    if SignalPipelineEnabled then
+    begin
+
+        if SP_CurrentBar <> SP_LastBar then
+        begin
+            SP_Cycle := SP_Cycle + 1;
+            SP_LastBar := SP_CurrentBar;
+        end;
+
+        SP_Ready := True;
+
+    end
+    else
+    begin
+        SP_Ready := False;
+        SP_Signal := 0;
+        SP_Confidence := 0;
+        SP_State := 0;
+    end;
+
+    if SignalPipelineDebug then
+    begin
+        Plot(SP_Signal);
+    end;
+
+end;
