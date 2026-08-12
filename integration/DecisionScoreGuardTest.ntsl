@@ -1,1 +1,75 @@
+const
+    ORION_DECISIONSCORE_VERSION_MAJOR = 1;
+    ORION_DECISIONSCORE_VERSION_MINOR = 0;
+    ORION_DECISIONSCORE_VERSION_PATCH = 0;
+    ORION_DECISIONSCORE_BUILD = 1;
 
+input
+    DecisionScoreEnabled(True);
+    DecisionScoreDebug(False);
+
+    DS_MinScore(70);
+    DS_TrendWeight(40);
+    DS_SignalWeight(35);
+    DS_RiskWeight(25);
+
+var
+    DS_Initialized : Boolean;
+    DS_Ready : Boolean;
+    DS_Error : Boolean;
+    DS_Blocked : Boolean;
+
+    DS_CurrentBar : Integer;
+    DS_LastBar : Integer;
+    DS_Cycle : Integer;
+
+    DS_TrendScore : Float;
+    DS_SignalScore : Float;
+    DS_RiskScore : Float;
+
+    DS_FinalScore : Float;
+
+    DS_TrendWeightValue : Float;
+    DS_SignalWeightValue : Float;
+    DS_RiskWeightValue : Float;
+
+    DS_DecisionAllowed : Boolean;
+    DS_EntryAllowed : Boolean;
+    DS_ExecutionAllowed : Boolean;
+
+    DS_State : Integer;
+
+begin
+
+    if not DS_Initialized then
+    begin
+        DS_Initialized := True;
+
+        DS_Ready := False;
+        DS_Error := False;
+        DS_Blocked := False;
+
+        DS_CurrentBar := CurrentBar;
+        DS_LastBar := CurrentBar;
+        DS_Cycle := 0;
+
+        DS_TrendScore := 0;
+        DS_SignalScore := 0;
+        DS_RiskScore := 0;
+
+        DS_FinalScore := 0;
+
+        DS_TrendWeightValue := DS_TrendWeight;
+        DS_SignalWeightValue := DS_SignalWeight;
+        DS_RiskWeightValue := DS_RiskWeight;
+
+        DS_DecisionAllowed := False;
+        DS_EntryAllowed := False;
+        DS_ExecutionAllowed := False;
+
+        DS_State := 0;
+    end;
+
+    DS_CurrentBar := CurrentBar;
+
+    if DecisionScore
