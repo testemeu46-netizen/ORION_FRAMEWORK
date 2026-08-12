@@ -1,1 +1,122 @@
+const
+    ORION_SIGNAL_VERSION_MAJOR = 1;
+    ORION_SIGNAL_VERSION_MINOR = 0;
+    ORION_SIGNAL_VERSION_PATCH = 0;
+    ORION_SIGNAL_BUILD = 1;
 
+input
+    SignalEnabled(True);
+    SignalDebug(False);
+
+var
+    SG_Initialized : Boolean;
+    SG_Ready : Boolean;
+    SG_Error : Boolean;
+
+    SG_CurrentBar : Integer;
+    SG_LastBar : Integer;
+    SG_Cycle : Integer;
+
+    SG_FastAverage : Float;
+    SG_SlowAverage : Float;
+
+    SG_Score : Float;
+    SG_Strength : Float;
+
+    SG_Direction : Integer;
+    SG_Signal : Integer;
+    SG_State : Integer;
+
+begin
+
+    if not SG_Initialized then
+    begin
+        SG_Initialized := True;
+
+        SG_Ready := False;
+        SG_Error := False;
+
+        SG_CurrentBar := CurrentBar;
+        SG_LastBar := CurrentBar;
+        SG_Cycle := 0;
+
+        SG_FastAverage := 0;
+        SG_SlowAverage := 0;
+
+        SG_Score := 0;
+        SG_Strength := 0;
+
+        SG_Direction := 0;
+        SG_Signal := 0;
+        SG_State := 0;
+    end;
+
+    SG_CurrentBar := CurrentBar;
+
+    SG_FastAverage := MediaExp(9, Close);
+    SG_SlowAverage := MediaExp(21, Close);
+
+    if SG_FastAverage > SG_SlowAverage then
+    begin
+        SG_Direction := 1;
+    end
+    else
+    begin
+        if SG_FastAverage < SG_SlowAverage then
+        begin
+            SG_Direction := -1;
+        end
+        else
+        begin
+            SG_Direction := 0;
+        end;
+    end;
+
+    SG_Score :=
+        SG_FastAverage - SG_SlowAverage;
+
+    SG_Strength := Abs(SG_Score);
+
+    if SG_Direction = 1 then
+    begin
+        SG_Signal := 1;
+        SG_State := 1;
+    end
+    else
+    begin
+        if SG_Direction = -1 then
+        begin
+            SG_Signal := -1;
+            SG_State := -1;
+        end
+        else
+        begin
+            SG_Signal := 0;
+            SG_State := 0;
+        end;
+    end;
+
+    if SignalEnabled then
+    begin
+
+        if SG_CurrentBar <> SG_LastBar then
+        begin
+            SG_Cycle := SG_Cycle + 1;
+            SG_LastBar := SG_CurrentBar;
+        end;
+
+        SG_Ready := True;
+
+    end
+    else
+    begin
+        SG_Ready := False;
+        SG_Signal := 0;
+    end;
+
+    if SignalDebug then
+    begin
+        Plot(SG_Signal);
+    end;
+
+end;
