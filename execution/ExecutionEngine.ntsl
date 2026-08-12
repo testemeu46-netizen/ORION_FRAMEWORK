@@ -1,1 +1,132 @@
+const
+    ORION_EXECUTIONENGINE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONENGINE_VERSION_MINOR = 0;
+    ORION_EXECUTIONENGINE_VERSION_PATCH = 0;
+    ORION_EXECUTIONENGINE_BUILD = 1;
 
+input
+    ExecutionEngineEnabled(False);
+    ExecutionEngineDebug(False);
+
+    EE_MaxContracts(3);
+    EE_PartialContracts(2);
+
+var
+    EE_Initialized : Boolean;
+    EE_Ready : Boolean;
+    EE_Error : Boolean;
+    EE_Blocked : Boolean;
+
+    EE_CurrentBar : Integer;
+    EE_LastBar : Integer;
+    EE_Cycle : Integer;
+
+    EE_Decision : Integer;
+    EE_RiskAuthorized : Boolean;
+    EE_ControlAuthorized : Boolean;
+
+    EE_Contracts : Integer;
+    EE_PartialContracts : Integer;
+
+    EE_Intent : Integer;
+    EE_State : Integer;
+
+    EE_SimulatedEntry : Boolean;
+    EE_SimulatedExit : Boolean;
+
+begin
+
+    if not EE_Initialized then
+    begin
+        EE_Initialized := True;
+
+        EE_Ready := False;
+        EE_Error := False;
+        EE_Blocked := True;
+
+        EE_CurrentBar := CurrentBar;
+        EE_LastBar := CurrentBar;
+        EE_Cycle := 0;
+
+        EE_Decision := 0;
+        EE_RiskAuthorized := False;
+        EE_ControlAuthorized := False;
+
+        EE_Contracts := EE_MaxContracts;
+        EE_PartialContracts := 2;
+
+        EE_Intent := 0;
+        EE_State := 0;
+
+        EE_SimulatedEntry := False;
+        EE_SimulatedExit := False;
+    end;
+
+    EE_CurrentBar := CurrentBar;
+
+    if EE_CurrentBar <> EE_LastBar then
+    begin
+        EE_Cycle := EE_Cycle + 1;
+        EE_LastBar := EE_CurrentBar;
+    end;
+
+    EE_Intent := 0;
+    EE_SimulatedEntry := False;
+    EE_SimulatedExit := False;
+
+    if ExecutionEngineEnabled then
+    begin
+
+        EE_Ready := True;
+
+        if EE_RiskAuthorized and
+           EE_ControlAuthorized then
+        begin
+
+            if EE_Decision = 1 then
+            begin
+                EE_Intent := 1;
+                EE_State := 1;
+                EE_SimulatedEntry := True;
+                EE_Blocked := False;
+            end
+            else
+            begin
+                if EE_Decision = -1 then
+                begin
+                    EE_Intent := -1;
+                    EE_State := -1;
+                    EE_SimulatedEntry := True;
+                    EE_Blocked := False;
+                end
+                else
+                begin
+                    EE_Intent := 0;
+                    EE_State := 0;
+                    EE_Blocked := False;
+                end;
+            end;
+
+        end
+        else
+        begin
+            EE_Intent := 0;
+            EE_State := 2;
+            EE_Blocked := True;
+        end;
+
+    end
+    else
+    begin
+        EE_Ready := False;
+        EE_Blocked := True;
+        EE_Intent := 0;
+        EE_State := 2;
+    end;
+
+    if ExecutionEngineDebug then
+    begin
+        Plot(EE_State);
+    end;
+
+end;
