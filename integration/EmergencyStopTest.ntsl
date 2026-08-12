@@ -1,0 +1,125 @@
+const
+    ORION_EMERGENCYSTOP_VERSION_MAJOR = 1;
+    ORION_EMERGENCYSTOP_VERSION_MINOR = 0;
+    ORION_EMERGENCYSTOP_VERSION_PATCH = 0;
+    ORION_EMERGENCYSTOP_BUILD = 1;
+
+input
+    EmergencyStopEnabled(True);
+    EmergencyStopDebug(False);
+
+var
+    ES_Initialized : Boolean;
+    ES_Ready : Boolean;
+    ES_Error : Boolean;
+    ES_Stopped : Boolean;
+
+    ES_CurrentBar : Integer;
+    ES_LastBar : Integer;
+    ES_Cycle : Integer;
+
+    ES_ManualStop : Boolean;
+    ES_RiskStop : Boolean;
+    ES_SystemError : Boolean;
+    ES_DataError : Boolean;
+
+    ES_EntryAllowed : Boolean;
+    ES_ExitAllowed : Boolean;
+    ES_ExecutionAllowed : Boolean;
+
+    ES_State : Integer;
+
+begin
+
+    if not ES_Initialized then
+    begin
+        ES_Initialized := True;
+
+        ES_Ready := False;
+        ES_Error := False;
+        ES_Stopped := False;
+
+        ES_CurrentBar := CurrentBar;
+        ES_LastBar := CurrentBar;
+        ES_Cycle := 0;
+
+        ES_ManualStop := False;
+        ES_RiskStop := False;
+        ES_SystemError := False;
+        ES_DataError := False;
+
+        ES_EntryAllowed := False;
+        ES_ExitAllowed := False;
+        ES_ExecutionAllowed := False;
+
+        ES_State := 0;
+    end;
+
+    ES_CurrentBar := CurrentBar;
+
+    if EmergencyStopEnabled then
+    begin
+
+        if ES_CurrentBar <> ES_LastBar then
+        begin
+            ES_Cycle := ES_Cycle + 1;
+            ES_LastBar := ES_CurrentBar;
+        end;
+
+        ES_Stopped := False;
+        ES_Error := False;
+
+        if ES_ManualStop then
+        begin
+            ES_Stopped := True;
+        end;
+
+        if ES_RiskStop then
+        begin
+            ES_Stopped := True;
+        end;
+
+        if ES_SystemError then
+        begin
+            ES_Stopped := True;
+        end;
+
+        if ES_DataError then
+        begin
+            ES_Stopped := True;
+        end;
+
+        if ES_Stopped then
+        begin
+            ES_EntryAllowed := False;
+            ES_ExitAllowed := False;
+            ES_ExecutionAllowed := False;
+            ES_State := 2;
+        end
+        else
+        begin
+            ES_EntryAllowed := False;
+            ES_ExitAllowed := False;
+            ES_ExecutionAllowed := False;
+            ES_State := 1;
+        end;
+
+        ES_Ready := True;
+
+    end
+    else
+    begin
+        ES_Ready := False;
+        ES_Stopped := True;
+        ES_EntryAllowed := False;
+        ES_ExitAllowed := False;
+        ES_ExecutionAllowed := False;
+        ES_State := 2;
+    end;
+
+    if EmergencyStopDebug then
+    begin
+        Plot(ES_State);
+    end;
+
+end;
