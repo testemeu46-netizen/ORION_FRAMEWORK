@@ -1,1 +1,146 @@
+const
+    ORION_TRENDBRIDGE_VERSION_MAJOR = 1;
+    ORION_TRENDBRIDGE_VERSION_MINOR = 0;
+    ORION_TRENDBRIDGE_VERSION_PATCH = 0;
+    ORION_TRENDBRIDGE_BUILD = 1;
 
+input
+    TrendBridgeEnabled(True);
+    TrendBridgeDebug(False);
+
+var
+    TB_Initialized : Boolean;
+    TB_Ready : Boolean;
+    TB_Error : Boolean;
+
+    TB_CurrentBar : Integer;
+    TB_LastBar : Integer;
+    TB_Cycle : Integer;
+
+    TB_Close : Float;
+    TB_Volume : Float;
+    TB_FinancialVolume : Float;
+
+    TB_AggressionBalance : Float;
+
+    TB_FastAverage : Float;
+    TB_SlowAverage : Float;
+
+    TB_TrendScore : Float;
+    TB_TrendStrength : Float;
+
+    TB_Direction : Integer;
+    TB_State : Integer;
+
+begin
+
+    if not TB_Initialized then
+    begin
+        TB_Initialized := True;
+
+        TB_Ready := False;
+        TB_Error := False;
+
+        TB_CurrentBar := CurrentBar;
+        TB_LastBar := CurrentBar;
+        TB_Cycle := 0;
+
+        TB_Close := Close;
+        TB_Volume := Volume;
+        TB_FinancialVolume := 0;
+
+        TB_AggressionBalance := 0;
+
+        TB_FastAverage := 0;
+        TB_SlowAverage := 0;
+
+        TB_TrendScore := 0;
+        TB_TrendStrength := 0;
+
+        TB_Direction := 0;
+        TB_State := 0;
+    end;
+
+    TB_CurrentBar := CurrentBar;
+
+    TB_Close := Close;
+    TB_Volume := Volume;
+
+    TB_FinancialVolume :=
+        TB_Close * TB_Volume;
+
+    if Close > Open then
+    begin
+        TB_AggressionBalance :=
+            TB_Volume;
+    end
+    else
+    begin
+        if Close < Open then
+        begin
+            TB_AggressionBalance :=
+                -TB_Volume;
+        end
+        else
+        begin
+            TB_AggressionBalance := 0;
+        end;
+    end;
+
+    TB_FastAverage :=
+        MediaExp(9, Close);
+
+    TB_SlowAverage :=
+        MediaExp(21, Close);
+
+    TB_TrendScore :=
+        TB_FastAverage -
+        TB_SlowAverage;
+
+    TB_TrendStrength :=
+        Abs(TB_TrendScore);
+
+    if TB_TrendScore > 0 then
+    begin
+        TB_Direction := 1;
+        TB_State := 1;
+    end
+    else
+    begin
+        if TB_TrendScore < 0 then
+        begin
+            TB_Direction := -1;
+            TB_State := -1;
+        end
+        else
+        begin
+            TB_Direction := 0;
+            TB_State := 0;
+        end;
+    end;
+
+    if TrendBridgeEnabled then
+    begin
+
+        if TB_CurrentBar <> TB_LastBar then
+        begin
+            TB_Cycle := TB_Cycle + 1;
+            TB_LastBar := TB_CurrentBar;
+        end;
+
+        TB_Ready := True;
+
+    end
+    else
+    begin
+        TB_Ready := False;
+        TB_Direction := 0;
+        TB_State := 0;
+    end;
+
+    if TrendBridgeDebug then
+    begin
+        Plot(TB_TrendScore);
+    end;
+
+end;
