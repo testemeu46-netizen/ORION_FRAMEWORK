@@ -1,1 +1,124 @@
+const
+    ORION_PIPELINE_VERSION_MAJOR = 1;
+    ORION_PIPELINE_VERSION_MINOR = 0;
+    ORION_PIPELINE_VERSION_PATCH = 0;
+    ORION_PIPELINE_BUILD = 1;
 
+input
+    PipelineEnabled(True);
+    PipelineDebug(False);
+
+var
+    EP_Initialized : Boolean;
+    EP_Ready : Boolean;
+    EP_Error : Boolean;
+
+    EP_CurrentBar : Integer;
+    EP_LastBar : Integer;
+    EP_Cycle : Integer;
+
+    EP_MarketDataReady : Boolean;
+    EP_MarketFlowReady : Boolean;
+    EP_TrendReady : Boolean;
+    EP_SignalReady : Boolean;
+    EP_RiskReady : Boolean;
+    EP_DecisionReady : Boolean;
+
+    EP_StagesReady : Integer;
+    EP_PipelineReady : Boolean;
+
+    EP_Decision : Integer;
+    EP_Authorized : Boolean;
+
+begin
+
+    if not EP_Initialized then
+    begin
+        EP_Initialized := True;
+
+        EP_Ready := False;
+        EP_Error := False;
+
+        EP_CurrentBar := CurrentBar;
+        EP_LastBar := CurrentBar;
+        EP_Cycle := 0;
+
+        EP_MarketDataReady := True;
+        EP_MarketFlowReady := True;
+        EP_TrendReady := True;
+        EP_SignalReady := True;
+        EP_RiskReady := True;
+        EP_DecisionReady := True;
+
+        EP_StagesReady := 0;
+        EP_PipelineReady := False;
+
+        EP_Decision := 0;
+        EP_Authorized := False;
+    end;
+
+    EP_CurrentBar := CurrentBar;
+
+    if PipelineEnabled then
+    begin
+
+        if EP_CurrentBar <> EP_LastBar then
+        begin
+            EP_Cycle := EP_Cycle + 1;
+            EP_LastBar := EP_CurrentBar;
+        end;
+
+        EP_StagesReady := 0;
+
+        if EP_MarketDataReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_MarketFlowReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_TrendReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_SignalReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_RiskReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_DecisionReady then
+            EP_StagesReady := EP_StagesReady + 1;
+
+        if EP_StagesReady = 6 then
+        begin
+            EP_PipelineReady := True;
+            EP_Ready := True;
+        end
+        else
+        begin
+            EP_PipelineReady := False;
+            EP_Ready := False;
+        end;
+
+        if EP_PipelineReady then
+        begin
+            EP_Authorized := True;
+        end
+        else
+        begin
+            EP_Authorized := False;
+        end;
+
+    end
+    else
+    begin
+        EP_Ready := False;
+        EP_PipelineReady := False;
+        EP_Authorized := False;
+    end;
+
+    if PipelineDebug then
+    begin
+        Plot(EP_StagesReady);
+    end;
+
+end;
