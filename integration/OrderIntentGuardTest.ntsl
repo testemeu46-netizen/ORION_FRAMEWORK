@@ -1,1 +1,135 @@
+const
+    ORION_ORDERINTENT_VERSION_MAJOR = 1;
+    ORION_ORDERINTENT_VERSION_MINOR = 0;
+    ORION_ORDERINTENT_VERSION_PATCH = 0;
+    ORION_ORDERINTENT_BUILD = 1;
 
+input
+    OrderIntentGuardEnabled(True);
+    OrderIntentGuardDebug(False);
+
+var
+    OI_Initialized : Boolean;
+    OI_Ready : Boolean;
+    OI_Error : Boolean;
+    OI_Blocked : Boolean;
+
+    OI_Direction : Integer;
+    OI_Contracts : Integer;
+    OI_StopValid : Boolean;
+    OI_TargetValid : Boolean;
+
+    OI_DirectionValid : Boolean;
+    OI_ContractsValid : Boolean;
+    OI_IntentValid : Boolean;
+
+    OI_DecisionAllowed : Boolean;
+    OI_EntryAllowed : Boolean;
+    OI_ExecutionAllowed : Boolean;
+
+    OI_State : Integer;
+
+begin
+
+    if not OI_Initialized then
+    begin
+        OI_Initialized := True;
+
+        OI_Ready := False;
+        OI_Error := False;
+        OI_Blocked := False;
+
+        OI_Direction := 0;
+        OI_Contracts := 0;
+
+        OI_StopValid := False;
+        OI_TargetValid := False;
+
+        OI_DirectionValid := False;
+        OI_ContractsValid := False;
+        OI_IntentValid := False;
+
+        OI_DecisionAllowed := False;
+        OI_EntryAllowed := False;
+        OI_ExecutionAllowed := False;
+
+        OI_State := 0;
+    end;
+
+    if OrderIntentGuardEnabled then
+    begin
+
+        OI_Error := False;
+        OI_Blocked := False;
+
+        OI_DirectionValid := False;
+        OI_ContractsValid := False;
+        OI_IntentValid := False;
+
+        if OI_Direction >= -1 then
+        begin
+            if OI_Direction <= 1 then
+            begin
+                if OI_Direction <> 0 then
+                begin
+                    OI_DirectionValid := True;
+                end;
+            end;
+        end;
+
+        if OI_Contracts > 0 then
+        begin
+            OI_ContractsValid := True;
+        end;
+
+        if OI_DirectionValid and OI_ContractsValid then
+        begin
+            if OI_StopValid then
+            begin
+                if OI_TargetValid then
+                begin
+                    OI_IntentValid := True;
+                end;
+            end;
+        end;
+
+        if OI_IntentValid then
+        begin
+            OI_DecisionAllowed := True;
+            OI_EntryAllowed := True;
+            OI_Blocked := False;
+            OI_State := 1;
+        end
+        else
+        begin
+            OI_Error := True;
+            OI_Blocked := True;
+
+            OI_DecisionAllowed := False;
+            OI_EntryAllowed := False;
+            OI_State := 2;
+        end;
+
+        OI_Ready := True;
+
+        OI_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        OI_Ready := False;
+        OI_Blocked := True;
+
+        OI_DecisionAllowed := False;
+        OI_EntryAllowed := False;
+        OI_ExecutionAllowed := False;
+
+        OI_State := 2;
+    end;
+
+    if OrderIntentGuardDebug then
+    begin
+        Plot(OI_State);
+    end;
+
+end;
