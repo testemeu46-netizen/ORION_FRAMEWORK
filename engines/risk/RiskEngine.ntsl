@@ -1,1 +1,114 @@
+const
+    ORION_RISK_VERSION_MAJOR = 1;
+    ORION_RISK_VERSION_MINOR = 0;
+    ORION_RISK_VERSION_PATCH = 0;
+    ORION_RISK_BUILD = 1;
 
+input
+    RiskEnabled(True);
+    RiskDebug(False);
+
+    RiskContracts(3);
+    RiskPartialContracts(2);
+
+    RiskStopFinancial(300);
+    RiskTargetFinancial(1000);
+
+var
+    RK_Initialized : Boolean;
+    RK_Ready : Boolean;
+    RK_Error : Boolean;
+    RK_Blocked : Boolean;
+
+    RK_CurrentBar : Integer;
+    RK_LastBar : Integer;
+    RK_Cycle : Integer;
+
+    RK_DailyResult : Float;
+    RK_OperationResult : Float;
+
+    RK_RemainingRisk : Float;
+    RK_RemainingTarget : Float;
+
+    RK_Contracts : Integer;
+    RK_PartialContracts : Integer;
+
+    RK_Authorized : Boolean;
+
+begin
+
+    if not RK_Initialized then
+    begin
+        RK_Initialized := True;
+
+        RK_Ready := False;
+        RK_Error := False;
+        RK_Blocked := False;
+
+        RK_CurrentBar := CurrentBar;
+        RK_LastBar := CurrentBar;
+        RK_Cycle := 0;
+
+        RK_DailyResult := 0;
+        RK_OperationResult := 0;
+
+        RK_RemainingRisk := RiskStopFinancial;
+        RK_RemainingTarget := RiskTargetFinancial;
+
+        RK_Contracts := RiskContracts;
+        RK_PartialContracts := RiskPartialContracts;
+
+        RK_Authorized := False;
+    end;
+
+    RK_CurrentBar := CurrentBar;
+
+    if RiskEnabled then
+    begin
+
+        if RK_CurrentBar <> RK_LastBar then
+        begin
+            RK_Cycle := RK_Cycle + 1;
+            RK_LastBar := RK_CurrentBar;
+        end;
+
+        if RK_DailyResult <= -RiskStopFinancial then
+        begin
+            RK_Blocked := True;
+        end;
+
+        if RK_DailyResult >= RiskTargetFinancial then
+        begin
+            RK_Blocked := True;
+        end;
+
+        if RK_Blocked then
+        begin
+            RK_Authorized := False;
+        end
+        else
+        begin
+            RK_Authorized := True;
+        end;
+
+        RK_Ready := True;
+
+    end
+    else
+    begin
+        RK_Ready := False;
+        RK_Authorized := False;
+    end;
+
+    RK_RemainingRisk :=
+        RiskStopFinancial + RK_DailyResult;
+
+    RK_RemainingTarget :=
+        RiskTargetFinancial - RK_DailyResult;
+
+    if RiskDebug then
+    begin
+        Plot(RK_DailyResult);
+    end;
+
+end;
