@@ -1,1 +1,256 @@
+const
+    ORION_FLOWTEST_VERSION_MAJOR = 1;
+    ORION_FLOWTEST_VERSION_MINOR = 0;
+    ORION_FLOWTEST_VERSION_PATCH = 0;
+    ORION_FLOWTEST_BUILD = 1;
 
+input
+    FlowTestEnabled(True);
+    FlowTestDebug(False);
+
+var
+    FT_Initialized : Boolean;
+    FT_Ready : Boolean;
+    FT_Error : Boolean;
+
+    FT_CurrentBar : Integer;
+    FT_LastBar : Integer;
+    FT_Cycle : Integer;
+
+    FT_Close : Float;
+    FT_Open : Float;
+    FT_Volume : Float;
+
+    FT_FastAverage : Float;
+    FT_SlowAverage : Float;
+
+    FT_TrendScore : Float;
+    FT_TrendDirection : Integer;
+
+    FT_Aggression : Float;
+
+    FT_Signal : Integer;
+    FT_Confidence : Float;
+
+    FT_DailyResult : Float;
+    FT_StopFinancial : Float;
+    FT_TargetFinancial : Float;
+
+    FT_RiskAuthorized : Boolean;
+    FT_RiskBlocked : Boolean;
+
+    FT_Decision : Integer;
+    FT_Intent : Integer;
+
+    FT_Contracts : Integer;
+    FT_PartialContracts : Integer;
+
+    FT_State : Integer;
+    FT_ExecutionAllowed : Boolean;
+
+begin
+
+    if not FT_Initialized then
+    begin
+        FT_Initialized := True;
+
+        FT_Ready := False;
+        FT_Error := False;
+
+        FT_CurrentBar := CurrentBar;
+        FT_LastBar := CurrentBar;
+        FT_Cycle := 0;
+
+        FT_Close := Close;
+        FT_Open := Open;
+        FT_Volume := Volume;
+
+        FT_FastAverage := 0;
+        FT_SlowAverage := 0;
+
+        FT_TrendScore := 0;
+        FT_TrendDirection := 0;
+
+        FT_Aggression := 0;
+
+        FT_Signal := 0;
+        FT_Confidence := 0;
+
+        FT_DailyResult := 0;
+        FT_StopFinancial := 300;
+        FT_TargetFinancial := 1000;
+
+        FT_RiskAuthorized := False;
+        FT_RiskBlocked := False;
+
+        FT_Decision := 0;
+        FT_Intent := 0;
+
+        FT_Contracts := 3;
+        FT_PartialContracts := 2;
+
+        FT_State := 0;
+        FT_ExecutionAllowed := False;
+    end;
+
+    FT_CurrentBar := CurrentBar;
+
+    FT_Close := Close;
+    FT_Open := Open;
+    FT_Volume := Volume;
+
+    FT_FastAverage := MediaExp(9, Close);
+    FT_SlowAverage := MediaExp(21, Close);
+
+    FT_TrendScore :=
+        FT_FastAverage - FT_SlowAverage;
+
+    if FT_TrendScore > 0 then
+    begin
+        FT_TrendDirection := 1;
+    end
+    else
+    begin
+        if FT_TrendScore < 0 then
+        begin
+            FT_TrendDirection := -1;
+        end
+        else
+        begin
+            FT_TrendDirection := 0;
+        end;
+    end;
+
+    if FT_Close > FT_Open then
+    begin
+        FT_Aggression := FT_Volume;
+    end
+    else
+    begin
+        if FT_Close < FT_Open then
+        begin
+            FT_Aggression := -FT_Volume;
+        end
+        else
+        begin
+            FT_Aggression := 0;
+        end;
+    end;
+
+    FT_Signal := 0;
+    FT_Confidence := 0;
+
+    if FT_TrendDirection = 1 then
+    begin
+        if FT_Aggression > 0 then
+        begin
+            FT_Signal := 1;
+            FT_Confidence := 100;
+        end;
+    end;
+
+    if FT_TrendDirection = -1 then
+    begin
+        if FT_Aggression < 0 then
+        begin
+            FT_Signal := -1;
+            FT_Confidence := 100;
+        end;
+    end;
+
+    FT_RiskBlocked := False;
+
+    if FT_DailyResult <= -FT_StopFinancial then
+    begin
+        FT_RiskBlocked := True;
+    end;
+
+    if FT_DailyResult >= FT_TargetFinancial then
+    begin
+        FT_RiskBlocked := True;
+    end;
+
+    FT_RiskAuthorized := False;
+
+    if not FT_RiskBlocked then
+    begin
+        if FT_Signal <> 0 then
+        begin
+            FT_RiskAuthorized := True;
+        end;
+    end;
+
+    FT_Decision := 0;
+
+    if FT_RiskAuthorized then
+    begin
+
+        if FT_Signal = 1 then
+        begin
+            if FT_TrendDirection = 1 then
+            begin
+                FT_Decision := 1;
+            end;
+        end;
+
+        if FT_Signal = -1 then
+        begin
+            if FT_TrendDirection = -1 then
+            begin
+                FT_Decision := -1;
+            end;
+        end;
+
+    end;
+
+    FT_Intent := 0;
+    FT_ExecutionAllowed := False;
+
+    if FT_Decision = 1 then
+    begin
+        FT_Intent := 1;
+    end;
+
+    if FT_Decision = -1 then
+    begin
+        FT_Intent := -1;
+    end;
+
+    if FlowTestEnabled then
+    begin
+
+        if FT_CurrentBar <> FT_LastBar then
+        begin
+            FT_Cycle := FT_Cycle + 1;
+            FT_LastBar := FT_CurrentBar;
+        end;
+
+        FT_Ready := True;
+
+        if FT_Decision <> 0 then
+        begin
+            FT_State := 1;
+        end
+        else
+        begin
+            FT_State := 0;
+        end;
+
+    end
+    else
+    begin
+        FT_Ready := False;
+        FT_Decision := 0;
+        FT_Intent := 0;
+        FT_State := 2;
+        FT_ExecutionAllowed := False;
+    end;
+
+    if FlowTestDebug then
+    begin
+        Plot(FT_TrendScore);
+        Plot2(FT_Signal);
+        Plot3(FT_Decision);
+    end;
+
+end;
