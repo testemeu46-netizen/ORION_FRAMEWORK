@@ -1,1 +1,146 @@
+const
+    ORION_DECISIONBRIDGE_VERSION_MAJOR = 1;
+    ORION_DECISIONBRIDGE_VERSION_MINOR = 0;
+    ORION_DECISIONBRIDGE_VERSION_PATCH = 0;
+    ORION_DECISIONBRIDGE_BUILD = 1;
 
+input
+    DecisionBridgeEnabled(True);
+    DecisionBridgeDebug(False);
+
+var
+    DB_Initialized : Boolean;
+    DB_Ready : Boolean;
+    DB_Error : Boolean;
+    DB_Blocked : Boolean;
+
+    DB_CurrentBar : Integer;
+    DB_LastBar : Integer;
+    DB_Cycle : Integer;
+
+    DB_TrendDirection : Integer;
+    DB_TrendScore : Float;
+    DB_TrendStrength : Float;
+
+    DB_Signal : Integer;
+    DB_Confidence : Float;
+
+    DB_RiskAuthorized : Boolean;
+    DB_RiskBlocked : Boolean;
+
+    DB_Decision : Integer;
+    DB_FinalScore : Float;
+    DB_State : Integer;
+
+begin
+
+    if not DB_Initialized then
+    begin
+        DB_Initialized := True;
+
+        DB_Ready := False;
+        DB_Error := False;
+        DB_Blocked := False;
+
+        DB_CurrentBar := CurrentBar;
+        DB_LastBar := CurrentBar;
+        DB_Cycle := 0;
+
+        DB_TrendDirection := 0;
+        DB_TrendScore := 0;
+        DB_TrendStrength := 0;
+
+        DB_Signal := 0;
+        DB_Confidence := 0;
+
+        DB_RiskAuthorized := False;
+        DB_RiskBlocked := False;
+
+        DB_Decision := 0;
+        DB_FinalScore := 0;
+        DB_State := 0;
+    end;
+
+    DB_CurrentBar := CurrentBar;
+
+    if DecisionBridgeEnabled then
+    begin
+
+        if DB_CurrentBar <> DB_LastBar then
+        begin
+            DB_Cycle := DB_Cycle + 1;
+            DB_LastBar := DB_CurrentBar;
+        end;
+
+        DB_Decision := 0;
+        DB_FinalScore := 0;
+        DB_State := 0;
+        DB_Blocked := False;
+
+        if DB_RiskBlocked then
+        begin
+            DB_Blocked := True;
+            DB_RiskAuthorized := False;
+            DB_Decision := 0;
+            DB_State := 2;
+        end
+        else
+        begin
+
+            if not DB_RiskAuthorized then
+            begin
+                DB_Blocked := True;
+                DB_Decision := 0;
+                DB_State := 2;
+            end
+            else
+            begin
+
+                if DB_Signal = 1 then
+                begin
+                    if DB_TrendDirection = 1 then
+                    begin
+                        DB_Decision := 1;
+                        DB_FinalScore := DB_Confidence;
+                        DB_State := 1;
+                    end;
+                end;
+
+                if DB_Signal = -1 then
+                begin
+                    if DB_TrendDirection = -1 then
+                    begin
+                        DB_Decision := -1;
+                        DB_FinalScore := DB_Confidence;
+                        DB_State := -1;
+                    end;
+                end;
+
+                if DB_Decision = 0 then
+                begin
+                    DB_FinalScore := 0;
+                    DB_State := 0;
+                end;
+
+            end;
+
+        end;
+
+        DB_Ready := True;
+
+    end
+    else
+    begin
+        DB_Ready := False;
+        DB_Blocked := True;
+        DB_Decision := 0;
+        DB_FinalScore := 0;
+        DB_State := 2;
+    end;
+
+    if DecisionBridgeDebug then
+    begin
+        Plot(DB_State);
+    end;
+
+end;
