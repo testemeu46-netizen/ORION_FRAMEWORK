@@ -1,1 +1,118 @@
+const
+    ORION_SIGNALBRIDGEENTRYGATE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEENTRYGATE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEENTRYGATE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEENTRYGATE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeEntryGateEnabled(True);
+    SignalBridgeEntryGateDebug(False);
+
+var
+    EG_Initialized : Boolean;
+    EG_Ready : Boolean;
+    EG_Error : Boolean;
+    EG_Blocked : Boolean;
+
+    EG_DecisionApproved : Boolean;
+    EG_PermissionGranted : Boolean;
+    EG_LockActive : Boolean;
+    EG_DataValid : Boolean;
+
+    EG_EntryApproved : Boolean;
+
+    EG_DecisionAllowed : Boolean;
+    EG_EntryAllowed : Boolean;
+    EG_ExecutionAllowed : Boolean;
+
+    EG_State : Integer;
+
+begin
+
+    if not EG_Initialized then
+    begin
+        EG_Initialized := True;
+
+        EG_Ready := False;
+        EG_Error := False;
+        EG_Blocked := False;
+
+        EG_DecisionApproved := True;
+        EG_PermissionGranted := True;
+        EG_LockActive := False;
+        EG_DataValid := True;
+
+        EG_EntryApproved := False;
+
+        EG_DecisionAllowed := False;
+        EG_EntryAllowed := False;
+        EG_ExecutionAllowed := False;
+
+        EG_State := 0;
+    end;
+
+    if SignalBridgeEntryGateEnabled then
+    begin
+
+        EG_Error := False;
+        EG_Blocked := False;
+
+        EG_EntryApproved := False;
+
+        if EG_DecisionApproved then
+        begin
+            if EG_PermissionGranted then
+            begin
+                if not EG_LockActive then
+                begin
+                    if EG_DataValid then
+                    begin
+                        EG_EntryApproved := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if EG_EntryApproved then
+        begin
+            EG_DecisionAllowed := True;
+            EG_EntryAllowed := True;
+
+            EG_Blocked := False;
+            EG_State := 1;
+        end
+        else
+        begin
+            EG_DecisionAllowed := False;
+            EG_EntryAllowed := False;
+
+            EG_Error := True;
+            EG_Blocked := True;
+            EG_State := 2;
+        end;
+
+        EG_Ready := True;
+
+        EG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EG_Ready := False;
+        EG_Blocked := True;
+
+        EG_EntryApproved := False;
+
+        EG_DecisionAllowed := False;
+        EG_EntryAllowed := False;
+        EG_ExecutionAllowed := False;
+
+        EG_State := 2;
+    end;
+
+    if SignalBridgeEntryGateDebug then
+    begin
+        Plot(EG_State);
+    end;
+
+end;
