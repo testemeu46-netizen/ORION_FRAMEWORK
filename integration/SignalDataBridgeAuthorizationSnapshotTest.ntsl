@@ -1,1 +1,130 @@
+const
+    ORION_SIGNALBRIDGEAUTHSNAPSHOT_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHSNAPSHOT_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHSNAPSHOT_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHSNAPSHOT_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationSnapshotEnabled(True);
+    SignalBridgeAuthorizationSnapshotDebug(False);
+
+var
+    APS_Initialized : Boolean;
+    APS_Ready : Boolean;
+    APS_Error : Boolean;
+    APS_Blocked : Boolean;
+
+    APS_AuthorizationActive : Boolean;
+    APS_AuthorizationFresh : Boolean;
+    APS_IntegrityValid : Boolean;
+    APS_SequenceValid : Boolean;
+    APS_LockActive : Boolean;
+
+    APS_SnapshotValid : Boolean;
+    APS_SnapshotApproved : Boolean;
+
+    APS_DecisionAllowed : Boolean;
+    APS_EntryAllowed : Boolean;
+    APS_ExecutionAllowed : Boolean;
+
+    APS_State : Integer;
+
+begin
+
+    if not APS_Initialized then
+    begin
+        APS_Initialized := True;
+
+        APS_Ready := False;
+        APS_Error := False;
+        APS_Blocked := False;
+
+        APS_AuthorizationActive := True;
+        APS_AuthorizationFresh := True;
+        APS_IntegrityValid := True;
+        APS_SequenceValid := True;
+        APS_LockActive := False;
+
+        APS_SnapshotValid := False;
+        APS_SnapshotApproved := False;
+
+        APS_DecisionAllowed := False;
+        APS_EntryAllowed := False;
+        APS_ExecutionAllowed := False;
+
+        APS_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationSnapshotEnabled then
+    begin
+
+        APS_Error := False;
+        APS_Blocked := False;
+
+        APS_SnapshotValid := False;
+        APS_SnapshotApproved := False;
+
+        if APS_AuthorizationActive then
+        begin
+            if APS_AuthorizationFresh then
+            begin
+                if APS_IntegrityValid then
+                begin
+                    if APS_SequenceValid then
+                    begin
+                        if not APS_LockActive then
+                        begin
+                            APS_SnapshotValid := True;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if APS_SnapshotValid then
+        begin
+            APS_SnapshotApproved := True;
+
+            APS_DecisionAllowed := True;
+            APS_EntryAllowed := True;
+
+            APS_Blocked := False;
+            APS_State := 1;
+        end
+        else
+        begin
+            APS_SnapshotApproved := False;
+
+            APS_DecisionAllowed := False;
+            APS_EntryAllowed := False;
+
+            APS_Error := True;
+            APS_Blocked := True;
+            APS_State := 2;
+        end;
+
+        APS_Ready := True;
+
+        APS_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        APS_Ready := False;
+        APS_Blocked := True;
+
+        APS_SnapshotApproved := False;
+
+        APS_DecisionAllowed := False;
+        APS_EntryAllowed := False;
+        APS_ExecutionAllowed := False;
+
+        APS_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationSnapshotDebug then
+    begin
+        Plot(APS_State);
+    end;
+
+end;
