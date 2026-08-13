@@ -1,1 +1,157 @@
+const
+    ORION_SIGNALDATABRIDGEINTEGRITY_VERSION_MAJOR = 1;
+    ORION_SIGNALDATABRIDGEINTEGRITY_VERSION_MINOR = 0;
+    ORION_SIGNALDATABRIDGEINTEGRITY_VERSION_PATCH = 0;
+    ORION_SIGNALDATABRIDGEINTEGRITY_VERSION_BUILD = 1;
 
+input
+    SignalDataBridgeIntegrityEnabled(True);
+    SignalDataBridgeIntegrityDebug(False);
+
+    SBI_MinScore(0);
+    SBI_MaxScore(100);
+
+var
+    SBI_Initialized : Boolean;
+    SBI_Ready : Boolean;
+    SBI_Error : Boolean;
+    SBI_Blocked : Boolean;
+
+    SBI_Direction : Integer;
+    SBI_Score : Float;
+    SBI_State : Integer;
+    SBI_Generation : Integer;
+
+    SBI_DirectionValid : Boolean;
+    SBI_ScoreValid : Boolean;
+    SBI_StateValid : Boolean;
+    SBI_GenerationValid : Boolean;
+
+    SBI_IntegrityValid : Boolean;
+    SBI_IntegrityApproved : Boolean;
+
+    SBI_DecisionAllowed : Boolean;
+    SBI_ExecutionAllowed : Boolean;
+
+begin
+
+    if not SBI_Initialized then
+    begin
+        SBI_Initialized := True;
+
+        SBI_Ready := False;
+        SBI_Error := False;
+        SBI_Blocked := False;
+
+        SBI_Direction := 0;
+        SBI_Score := 0;
+        SBI_State := 0;
+        SBI_Generation := 0;
+
+        SBI_DirectionValid := False;
+        SBI_ScoreValid := False;
+        SBI_StateValid := False;
+        SBI_GenerationValid := False;
+
+        SBI_IntegrityValid := False;
+        SBI_IntegrityApproved := False;
+
+        SBI_DecisionAllowed := False;
+        SBI_ExecutionAllowed := False;
+    end;
+
+    if SignalDataBridgeIntegrityEnabled then
+    begin
+
+        SBI_Error := False;
+        SBI_Blocked := False;
+
+        SBI_DirectionValid := False;
+        SBI_ScoreValid := False;
+        SBI_StateValid := False;
+        SBI_GenerationValid := False;
+
+        SBI_IntegrityValid := False;
+        SBI_IntegrityApproved := False;
+
+        if SBI_Direction >= -1 then
+        begin
+            if SBI_Direction <= 1 then
+            begin
+                SBI_DirectionValid := True;
+            end;
+        end;
+
+        if SBI_Score >= SBI_MinScore then
+        begin
+            if SBI_Score <= SBI_MaxScore then
+            begin
+                SBI_ScoreValid := True;
+            end;
+        end;
+
+        if SBI_State >= 0 then
+        begin
+            if SBI_State <= 2 then
+            begin
+                SBI_StateValid := True;
+            end;
+        end;
+
+        if SBI_Generation >= 0 then
+        begin
+            SBI_GenerationValid := True;
+        end;
+
+        if SBI_DirectionValid then
+        begin
+            if SBI_ScoreValid then
+            begin
+                if SBI_StateValid then
+                begin
+                    if SBI_GenerationValid then
+                    begin
+                        SBI_IntegrityValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if SBI_IntegrityValid then
+        begin
+            SBI_IntegrityApproved := True;
+            SBI_DecisionAllowed := True;
+            SBI_Blocked := False;
+        end
+        else
+        begin
+            SBI_IntegrityApproved := False;
+            SBI_DecisionAllowed := False;
+
+            SBI_Error := True;
+            SBI_Blocked := True;
+        end;
+
+        SBI_Ready := True;
+
+        SBI_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SBI_Ready := False;
+        SBI_Blocked := True;
+
+        SBI_IntegrityValid := False;
+        SBI_IntegrityApproved := False;
+
+        SBI_DecisionAllowed := False;
+        SBI_ExecutionAllowed := False;
+    end;
+
+    if SignalDataBridgeIntegrityDebug then
+    begin
+        Plot(SBI_Generation);
+    end;
+
+end;
