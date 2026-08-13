@@ -1,1 +1,131 @@
+const
+    ORION_SIGNALBRIDGEAUTHSEQUENCE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHSEQUENCE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHSEQUENCE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHSEQUENCE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationSequenceEnabled(True);
+    SignalBridgeAuthorizationSequenceDebug(False);
+
+var
+    AS_Initialized : Boolean;
+    AS_Ready : Boolean;
+    AS_Error : Boolean;
+    AS_Blocked : Boolean;
+
+    AS_CurrentGeneration : Integer;
+    AS_PreviousGeneration : Integer;
+
+    AS_AuthorizationActive : Boolean;
+    AS_AuthorizationFresh : Boolean;
+    AS_IntegrityValid : Boolean;
+
+    AS_SequenceValid : Boolean;
+    AS_SequenceApproved : Boolean;
+
+    AS_DecisionAllowed : Boolean;
+    AS_EntryAllowed : Boolean;
+    AS_ExecutionAllowed : Boolean;
+
+    AS_State : Integer;
+
+begin
+
+    if not AS_Initialized then
+    begin
+        AS_Initialized := True;
+
+        AS_Ready := False;
+        AS_Error := False;
+        AS_Blocked := False;
+
+        AS_CurrentGeneration := 0;
+        AS_PreviousGeneration := 0;
+
+        AS_AuthorizationActive := True;
+        AS_AuthorizationFresh := True;
+        AS_IntegrityValid := True;
+
+        AS_SequenceValid := False;
+        AS_SequenceApproved := False;
+
+        AS_DecisionAllowed := False;
+        AS_EntryAllowed := False;
+        AS_ExecutionAllowed := False;
+
+        AS_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationSequenceEnabled then
+    begin
+
+        AS_Error := False;
+        AS_Blocked := False;
+
+        AS_SequenceValid := False;
+        AS_SequenceApproved := False;
+
+        if AS_AuthorizationActive then
+        begin
+            if AS_AuthorizationFresh then
+            begin
+                if AS_IntegrityValid then
+                begin
+                    if AS_CurrentGeneration >= AS_PreviousGeneration then
+                    begin
+                        AS_SequenceValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if AS_SequenceValid then
+        begin
+            AS_SequenceApproved := True;
+
+            AS_PreviousGeneration := AS_CurrentGeneration;
+
+            AS_DecisionAllowed := True;
+            AS_EntryAllowed := True;
+
+            AS_Blocked := False;
+            AS_State := 1;
+        end
+        else
+        begin
+            AS_SequenceApproved := False;
+
+            AS_DecisionAllowed := False;
+            AS_EntryAllowed := False;
+
+            AS_Error := True;
+            AS_Blocked := True;
+            AS_State := 2;
+        end;
+
+        AS_Ready := True;
+
+        AS_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AS_Ready := False;
+        AS_Blocked := True;
+
+        AS_SequenceApproved := False;
+
+        AS_DecisionAllowed := False;
+        AS_EntryAllowed := False;
+        AS_ExecutionAllowed := False;
+
+        AS_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationSequenceDebug then
+    begin
+        Plot(AS_State);
+    end;
+
+end;
