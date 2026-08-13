@@ -1,1 +1,113 @@
+const
+    ORION_SIGNALBRIDGEAUTHREVOCATION_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHREVOCATION_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHREVOCATION_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHREVOCATION_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationRevocationEnabled(True);
+    SignalBridgeAuthorizationRevocationDebug(False);
+
+var
+    AR_Initialized : Boolean;
+    AR_Ready : Boolean;
+    AR_Error : Boolean;
+    AR_Blocked : Boolean;
+
+    AR_AuthorizationActive : Boolean;
+    AR_RevocationRequested : Boolean;
+    AR_AuthorizationRevoked : Boolean;
+
+    AR_DecisionAllowed : Boolean;
+    AR_EntryAllowed : Boolean;
+    AR_ExecutionAllowed : Boolean;
+
+    AR_State : Integer;
+
+begin
+
+    if not AR_Initialized then
+    begin
+        AR_Initialized := True;
+
+        AR_Ready := False;
+        AR_Error := False;
+        AR_Blocked := False;
+
+        AR_AuthorizationActive := True;
+        AR_RevocationRequested := False;
+        AR_AuthorizationRevoked := False;
+
+        AR_DecisionAllowed := False;
+        AR_EntryAllowed := False;
+        AR_ExecutionAllowed := False;
+
+        AR_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationRevocationEnabled then
+    begin
+
+        AR_Error := False;
+        AR_Blocked := False;
+
+        AR_AuthorizationRevoked := False;
+
+        if AR_RevocationRequested then
+        begin
+            AR_AuthorizationRevoked := True;
+            AR_AuthorizationActive := False;
+        end;
+
+        if AR_AuthorizationRevoked then
+        begin
+            AR_DecisionAllowed := False;
+            AR_EntryAllowed := False;
+            AR_ExecutionAllowed := False;
+
+            AR_Blocked := True;
+            AR_State := 2;
+        end
+        else
+        begin
+            if AR_AuthorizationActive then
+            begin
+                AR_DecisionAllowed := True;
+                AR_EntryAllowed := True;
+            end
+            else
+            begin
+                AR_DecisionAllowed := False;
+                AR_EntryAllowed := False;
+
+                AR_Blocked := True;
+            end;
+
+            AR_ExecutionAllowed := False;
+            AR_State := 1;
+        end;
+
+        AR_Ready := True;
+
+    end
+    else
+    begin
+        AR_Ready := False;
+        AR_Blocked := True;
+
+        AR_AuthorizationRevoked := True;
+        AR_AuthorizationActive := False;
+
+        AR_DecisionAllowed := False;
+        AR_EntryAllowed := False;
+        AR_ExecutionAllowed := False;
+
+        AR_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationRevocationDebug then
+    begin
+        Plot(AR_State);
+    end;
+
+end;
