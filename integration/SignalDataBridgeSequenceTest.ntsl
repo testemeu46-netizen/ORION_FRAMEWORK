@@ -1,1 +1,114 @@
+const
+    ORION_SIGNALBRIDGESEQUENCE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGESEQUENCE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGESEQUENCE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGESEQUENCE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeSequenceEnabled(True);
+    SignalBridgeSequenceDebug(False);
+
+var
+    SQ_Initialized : Boolean;
+    SQ_Ready : Boolean;
+    SQ_Error : Boolean;
+    SQ_Blocked : Boolean;
+
+    SQ_CurrentGeneration : Integer;
+    SQ_PreviousGeneration : Integer;
+
+    SQ_SequenceValid : Boolean;
+    SQ_SequenceApproved : Boolean;
+
+    SQ_DecisionAllowed : Boolean;
+    SQ_EntryAllowed : Boolean;
+    SQ_ExecutionAllowed : Boolean;
+
+    SQ_State : Integer;
+
+begin
+
+    if not SQ_Initialized then
+    begin
+        SQ_Initialized := True;
+
+        SQ_Ready := False;
+        SQ_Error := False;
+        SQ_Blocked := False;
+
+        SQ_CurrentGeneration := 0;
+        SQ_PreviousGeneration := 0;
+
+        SQ_SequenceValid := False;
+        SQ_SequenceApproved := False;
+
+        SQ_DecisionAllowed := False;
+        SQ_EntryAllowed := False;
+        SQ_ExecutionAllowed := False;
+
+        SQ_State := 0;
+    end;
+
+    if SignalBridgeSequenceEnabled then
+    begin
+
+        SQ_Error := False;
+        SQ_Blocked := False;
+
+        SQ_SequenceValid := False;
+        SQ_SequenceApproved := False;
+
+        if SQ_CurrentGeneration >= SQ_PreviousGeneration then
+        begin
+            SQ_SequenceValid := True;
+        end;
+
+        if SQ_SequenceValid then
+        begin
+            SQ_SequenceApproved := True;
+
+            SQ_DecisionAllowed := True;
+            SQ_EntryAllowed := True;
+
+            SQ_PreviousGeneration := SQ_CurrentGeneration;
+
+            SQ_Blocked := False;
+            SQ_State := 1;
+        end
+        else
+        begin
+            SQ_SequenceApproved := False;
+
+            SQ_DecisionAllowed := False;
+            SQ_EntryAllowed := False;
+
+            SQ_Error := True;
+            SQ_Blocked := True;
+            SQ_State := 2;
+        end;
+
+        SQ_Ready := True;
+
+        SQ_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SQ_Ready := False;
+        SQ_Blocked := True;
+
+        SQ_SequenceApproved := False;
+
+        SQ_DecisionAllowed := False;
+        SQ_EntryAllowed := False;
+        SQ_ExecutionAllowed := False;
+
+        SQ_State := 2;
+    end;
+
+    if SignalBridgeSequenceDebug then
+    begin
+        Plot(SQ_State);
+    end;
+
+end;
