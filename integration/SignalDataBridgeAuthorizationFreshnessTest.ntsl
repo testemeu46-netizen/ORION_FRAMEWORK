@@ -1,1 +1,115 @@
+const
+    ORION_SIGNALBRIDGEAUTHFRESHNESS_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHFRESHNESS_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHFRESHNESS_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHFRESHNESS_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationFreshnessEnabled(True);
+    SignalBridgeAuthorizationFreshnessDebug(False);
+
+var
+    AF_Initialized : Boolean;
+    AF_Ready : Boolean;
+    AF_Error : Boolean;
+    AF_Blocked : Boolean;
+
+    AF_AuthorizationActive : Boolean;
+    AF_AuthorizationFresh : Boolean;
+
+    AF_FreshnessValid : Boolean;
+    AF_FreshnessApproved : Boolean;
+
+    AF_DecisionAllowed : Boolean;
+    AF_EntryAllowed : Boolean;
+    AF_ExecutionAllowed : Boolean;
+
+    AF_State : Integer;
+
+begin
+
+    if not AF_Initialized then
+    begin
+        AF_Initialized := True;
+
+        AF_Ready := False;
+        AF_Error := False;
+        AF_Blocked := False;
+
+        AF_AuthorizationActive := True;
+        AF_AuthorizationFresh := True;
+
+        AF_FreshnessValid := False;
+        AF_FreshnessApproved := False;
+
+        AF_DecisionAllowed := False;
+        AF_EntryAllowed := False;
+        AF_ExecutionAllowed := False;
+
+        AF_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationFreshnessEnabled then
+    begin
+
+        AF_Error := False;
+        AF_Blocked := False;
+
+        AF_FreshnessValid := False;
+        AF_FreshnessApproved := False;
+
+        if AF_AuthorizationActive then
+        begin
+            if AF_AuthorizationFresh then
+            begin
+                AF_FreshnessValid := True;
+            end;
+        end;
+
+        if AF_FreshnessValid then
+        begin
+            AF_FreshnessApproved := True;
+
+            AF_DecisionAllowed := True;
+            AF_EntryAllowed := True;
+
+            AF_Blocked := False;
+            AF_State := 1;
+        end
+        else
+        begin
+            AF_FreshnessApproved := False;
+
+            AF_DecisionAllowed := False;
+            AF_EntryAllowed := False;
+
+            AF_Error := True;
+            AF_Blocked := True;
+            AF_State := 2;
+        end;
+
+        AF_Ready := True;
+
+        AF_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AF_Ready := False;
+        AF_Blocked := True;
+
+        AF_FreshnessApproved := False;
+
+        AF_DecisionAllowed := False;
+        AF_EntryAllowed := False;
+        AF_ExecutionAllowed := False;
+
+        AF_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationFreshnessDebug then
+    begin
+        Plot(AF_State);
+    end;
+
+end;
