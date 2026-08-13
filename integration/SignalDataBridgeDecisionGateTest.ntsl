@@ -1,1 +1,123 @@
+const
+    ORION_SIGNALBRIDGEDECISIONGATE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEDECISIONGATE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEDECISIONGATE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEDECISIONGATE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeDecisionGateEnabled(True);
+    SignalBridgeDecisionGateDebug(False);
+
+var
+    DG_Initialized : Boolean;
+    DG_Ready : Boolean;
+    DG_Error : Boolean;
+    DG_Blocked : Boolean;
+
+    DG_DataValid : Boolean;
+    DG_Fresh : Boolean;
+    DG_IntegrityValid : Boolean;
+    DG_PermissionGranted : Boolean;
+    DG_LockActive : Boolean;
+
+    DG_DecisionApproved : Boolean;
+
+    DG_DecisionAllowed : Boolean;
+    DG_EntryAllowed : Boolean;
+    DG_ExecutionAllowed : Boolean;
+
+    DG_State : Integer;
+
+begin
+
+    if not DG_Initialized then
+    begin
+        DG_Initialized := True;
+
+        DG_Ready := False;
+        DG_Error := False;
+        DG_Blocked := False;
+
+        DG_DataValid := True;
+        DG_Fresh := True;
+        DG_IntegrityValid := True;
+        DG_PermissionGranted := True;
+        DG_LockActive := False;
+
+        DG_DecisionApproved := False;
+
+        DG_DecisionAllowed := False;
+        DG_EntryAllowed := False;
+        DG_ExecutionAllowed := False;
+
+        DG_State := 0;
+    end;
+
+    if SignalBridgeDecisionGateEnabled then
+    begin
+
+        DG_Error := False;
+        DG_Blocked := False;
+
+        DG_DecisionApproved := False;
+
+        if DG_DataValid then
+        begin
+            if DG_Fresh then
+            begin
+                if DG_IntegrityValid then
+                begin
+                    if DG_PermissionGranted then
+                    begin
+                        if not DG_LockActive then
+                        begin
+                            DG_DecisionApproved := True;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if DG_DecisionApproved then
+        begin
+            DG_DecisionAllowed := True;
+            DG_EntryAllowed := True;
+
+            DG_Blocked := False;
+            DG_State := 1;
+        end
+        else
+        begin
+            DG_DecisionAllowed := False;
+            DG_EntryAllowed := False;
+
+            DG_Error := True;
+            DG_Blocked := True;
+            DG_State := 2;
+        end;
+
+        DG_Ready := True;
+
+        DG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        DG_Ready := False;
+        DG_Blocked := True;
+
+        DG_DecisionApproved := False;
+
+        DG_DecisionAllowed := False;
+        DG_EntryAllowed := False;
+        DG_ExecutionAllowed := False;
+
+        DG_State := 2;
+    end;
+
+    if SignalBridgeDecisionGateDebug then
+    begin
+        Plot(DG_State);
+    end;
+
+end;
