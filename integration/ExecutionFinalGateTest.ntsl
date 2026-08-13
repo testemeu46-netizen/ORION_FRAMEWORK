@@ -1,1 +1,165 @@
+const
+    ORION_EXECUTIONFINALGATE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONFINALGATE_VERSION_MINOR = 0;
+    ORION_EXECUTIONFINALGATE_VERSION_PATCH = 0;
+    ORION_EXECUTIONFINALGATE_VERSION_BUILD = 1;
 
+input
+    ExecutionFinalGateEnabled(True);
+    ExecutionFinalGateDebug(False);
+
+var
+    FG_Initialized : Boolean;
+    FG_Ready : Boolean;
+    FG_Error : Boolean;
+    FG_Blocked : Boolean;
+
+    FG_DecisionValid : Boolean;
+    FG_DirectionValid : Boolean;
+    FG_RiskValid : Boolean;
+    FG_QuantityValid : Boolean;
+    FG_PartialValid : Boolean;
+    FG_StopTargetValid : Boolean;
+    FG_ProtectionValid : Boolean;
+    FG_PermissionValid : Boolean;
+    FG_StateValid : Boolean;
+    FG_OrderValid : Boolean;
+    FG_DuplicateFree : Boolean;
+    FG_PriceValid : Boolean;
+    FG_TimingValid : Boolean;
+    FG_SignalValid : Boolean;
+
+    FG_FinalGateValid : Boolean;
+    FG_FinalApproval : Boolean;
+
+    FG_ExecutionAllowed : Boolean;
+
+    FG_State : Integer;
+
+begin
+
+    if not FG_Initialized then
+    begin
+        FG_Initialized := True;
+
+        FG_Ready := False;
+        FG_Error := False;
+        FG_Blocked := False;
+
+        FG_DecisionValid := False;
+        FG_DirectionValid := False;
+        FG_RiskValid := False;
+        FG_QuantityValid := False;
+        FG_PartialValid := False;
+        FG_StopTargetValid := False;
+        FG_ProtectionValid := False;
+        FG_PermissionValid := False;
+        FG_StateValid := False;
+        FG_OrderValid := False;
+        FG_DuplicateFree := False;
+        FG_PriceValid := False;
+        FG_TimingValid := False;
+        FG_SignalValid := False;
+
+        FG_FinalGateValid := False;
+        FG_FinalApproval := False;
+
+        FG_ExecutionAllowed := False;
+
+        FG_State := 0;
+    end;
+
+    if ExecutionFinalGateEnabled then
+    begin
+
+        FG_Error := False;
+        FG_Blocked := False;
+
+        FG_FinalGateValid := False;
+        FG_FinalApproval := False;
+
+        if FG_DecisionValid then
+        begin
+            if FG_DirectionValid then
+            begin
+                if FG_RiskValid then
+                begin
+                    if FG_QuantityValid then
+                    begin
+                        if FG_PartialValid then
+                        begin
+                            if FG_StopTargetValid then
+                            begin
+                                if FG_ProtectionValid then
+                                begin
+                                    if FG_PermissionValid then
+                                    begin
+                                        if FG_StateValid then
+                                        begin
+                                            if FG_OrderValid then
+                                            begin
+                                                if FG_DuplicateFree then
+                                                begin
+                                                    if FG_PriceValid then
+                                                    begin
+                                                        if FG_TimingValid then
+                                                        begin
+                                                            if FG_SignalValid then
+                                                            begin
+                                                                FG_FinalGateValid := True;
+                                                            end;
+                                                        end;
+                                                    end;
+                                                end;
+                                            end;
+                                        end;
+                                    end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if FG_FinalGateValid then
+        begin
+            FG_FinalApproval := True;
+            FG_Blocked := False;
+
+            FG_State := 1;
+        end
+        else
+        begin
+            FG_Error := True;
+            FG_Blocked := True;
+
+            FG_FinalApproval := False;
+
+            FG_State := 2;
+        end;
+
+        FG_Ready := True;
+
+        FG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        FG_Ready := False;
+        FG_Blocked := True;
+
+        FG_FinalGateValid := False;
+        FG_FinalApproval := False;
+
+        FG_ExecutionAllowed := False;
+
+        FG_State := 2;
+    end;
+
+    if ExecutionFinalGateDebug then
+    begin
+        Plot(FG_State);
+    end;
+
+end;
