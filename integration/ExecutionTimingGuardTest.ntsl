@@ -1,1 +1,136 @@
+const
+    ORION_EXECUTIONTIMING_VERSION_MAJOR = 1;
+    ORION_EXECUTIONTIMING_VERSION_MINOR = 0;
+    ORION_EXECUTIONTIMING_VERSION_PATCH = 0;
+    ORION_EXECUTIONTIMING_VERSION_BUILD = 1;
 
+input
+    ExecutionTimingGuardEnabled(True);
+    ExecutionTimingGuardDebug(False);
+
+var
+    ET_Initialized : Boolean;
+    ET_Ready : Boolean;
+    ET_Error : Boolean;
+    ET_Blocked : Boolean;
+
+    ET_CurrentBar : Integer;
+    ET_LastBar : Integer;
+    ET_Cycle : Integer;
+    ET_LastCycle : Integer;
+
+    ET_NewCycle : Boolean;
+    ET_TimingValid : Boolean;
+    ET_TimingApproved : Boolean;
+
+    ET_DecisionAllowed : Boolean;
+    ET_EntryAllowed : Boolean;
+    ET_OrderApproved : Boolean;
+    ET_ExecutionAllowed : Boolean;
+
+    ET_State : Integer;
+
+begin
+
+    if not ET_Initialized then
+    begin
+        ET_Initialized := True;
+
+        ET_Ready := False;
+        ET_Error := False;
+        ET_Blocked := False;
+
+        ET_CurrentBar := CurrentBar;
+        ET_LastBar := CurrentBar;
+
+        ET_Cycle := 0;
+        ET_LastCycle := -1;
+
+        ET_NewCycle := False;
+        ET_TimingValid := False;
+        ET_TimingApproved := False;
+
+        ET_DecisionAllowed := False;
+        ET_EntryAllowed := False;
+        ET_OrderApproved := False;
+        ET_ExecutionAllowed := False;
+
+        ET_State := 0;
+    end;
+
+    ET_CurrentBar := CurrentBar;
+
+    if ExecutionTimingGuardEnabled then
+    begin
+
+        ET_Error := False;
+        ET_Blocked := False;
+
+        ET_NewCycle := False;
+        ET_TimingValid := False;
+        ET_TimingApproved := False;
+
+        if ET_CurrentBar <> ET_LastBar then
+        begin
+            ET_LastBar := ET_CurrentBar;
+            ET_Cycle := ET_Cycle + 1;
+        end;
+
+        if ET_Cycle <> ET_LastCycle then
+        begin
+            ET_NewCycle := True;
+            ET_TimingValid := True;
+        end;
+
+        if ET_TimingValid then
+        begin
+            ET_TimingApproved := True;
+        end;
+
+        if ET_TimingApproved then
+        begin
+            ET_DecisionAllowed := True;
+            ET_EntryAllowed := True;
+            ET_OrderApproved := True;
+            ET_Blocked := False;
+
+            ET_LastCycle := ET_Cycle;
+
+            ET_State := 1;
+        end
+        else
+        begin
+            ET_Error := True;
+            ET_Blocked := True;
+
+            ET_DecisionAllowed := False;
+            ET_EntryAllowed := False;
+            ET_OrderApproved := False;
+
+            ET_State := 2;
+        end;
+
+        ET_Ready := True;
+
+        ET_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ET_Ready := False;
+        ET_Blocked := True;
+
+        ET_DecisionAllowed := False;
+        ET_EntryAllowed := False;
+        ET_OrderApproved := False;
+        ET_ExecutionAllowed := False;
+
+        ET_State := 2;
+    end;
+
+    if ExecutionTimingGuardDebug then
+    begin
+        Plot(ET_State);
+    end;
+
+end;
