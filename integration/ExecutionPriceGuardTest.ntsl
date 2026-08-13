@@ -1,1 +1,144 @@
+const
+    ORION_EXECUTIONPRICE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONPRICE_VERSION_MINOR = 0;
+    ORION_EXECUTIONPRICE_VERSION_PATCH = 0;
+    ORION_EXECUTIONPRICE_VERSION_BUILD = 1;
 
+input
+    ExecutionPriceGuardEnabled(True);
+    ExecutionPriceGuardDebug(False);
+
+    EP_MinPrice(0.01);
+
+var
+    EX_Initialized : Boolean;
+    EX_Ready : Boolean;
+    EX_Error : Boolean;
+    EX_Blocked : Boolean;
+
+    EX_Price : Float;
+    EX_ReferencePrice : Float;
+
+    EX_PriceValid : Boolean;
+    EX_ReferenceValid : Boolean;
+    EX_PriceRelationValid : Boolean;
+    EX_PriceApproved : Boolean;
+
+    EX_DecisionAllowed : Boolean;
+    EX_EntryAllowed : Boolean;
+    EX_OrderApproved : Boolean;
+    EX_ExecutionAllowed : Boolean;
+
+    EX_State : Integer;
+
+begin
+
+    if not EX_Initialized then
+    begin
+        EX_Initialized := True;
+
+        EX_Ready := False;
+        EX_Error := False;
+        EX_Blocked := False;
+
+        EX_Price := 0;
+        EX_ReferencePrice := 0;
+
+        EX_PriceValid := False;
+        EX_ReferenceValid := False;
+        EX_PriceRelationValid := False;
+        EX_PriceApproved := False;
+
+        EX_DecisionAllowed := False;
+        EX_EntryAllowed := False;
+        EX_OrderApproved := False;
+        EX_ExecutionAllowed := False;
+
+        EX_State := 0;
+    end;
+
+    if ExecutionPriceGuardEnabled then
+    begin
+
+        EX_Error := False;
+        EX_Blocked := False;
+
+        EX_PriceValid := False;
+        EX_ReferenceValid := False;
+        EX_PriceRelationValid := False;
+        EX_PriceApproved := False;
+
+        if EX_Price >= EP_MinPrice then
+        begin
+            EX_PriceValid := True;
+        end;
+
+        if EX_ReferencePrice >= EP_MinPrice then
+        begin
+            EX_ReferenceValid := True;
+        end;
+
+        if EX_PriceValid and EX_ReferenceValid then
+        begin
+            if EX_Price > 0 then
+            begin
+                if EX_ReferencePrice > 0 then
+                begin
+                    EX_PriceRelationValid := True;
+                end;
+            end;
+        end;
+
+        if EX_PriceValid and EX_ReferenceValid then
+        begin
+            if EX_PriceRelationValid then
+            begin
+                EX_PriceApproved := True;
+            end;
+        end;
+
+        if EX_PriceApproved then
+        begin
+            EX_DecisionAllowed := True;
+            EX_EntryAllowed := True;
+            EX_OrderApproved := True;
+            EX_Blocked := False;
+
+            EX_State := 1;
+        end
+        else
+        begin
+            EX_Error := True;
+            EX_Blocked := True;
+
+            EX_DecisionAllowed := False;
+            EX_EntryAllowed := False;
+            EX_OrderApproved := False;
+
+            EX_State := 2;
+        end;
+
+        EX_Ready := True;
+
+        EX_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EX_Ready := False;
+        EX_Blocked := True;
+
+        EX_DecisionAllowed := False;
+        EX_EntryAllowed := False;
+        EX_OrderApproved := False;
+        EX_ExecutionAllowed := False;
+
+        EX_State := 2;
+    end;
+
+    if ExecutionPriceGuardDebug then
+    begin
+        Plot(EX_State);
+    end;
+
+end;
