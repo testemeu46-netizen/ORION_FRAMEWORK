@@ -1,1 +1,116 @@
+const
+    ORION_SIGNALBRIDGESTATE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGESTATE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGESTATE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGESTATE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeStateEnabled(True);
+    SignalBridgeStateDebug(False);
+
+    ST_MinState(0);
+    ST_MaxState(2);
+
+var
+    ST_Initialized : Boolean;
+    ST_Ready : Boolean;
+    ST_Error : Boolean;
+    ST_Blocked : Boolean;
+
+    ST_SignalState : Integer;
+
+    ST_StateValid : Boolean;
+    ST_StateApproved : Boolean;
+
+    ST_DecisionAllowed : Boolean;
+    ST_EntryAllowed : Boolean;
+    ST_ExecutionAllowed : Boolean;
+
+    ST_State : Integer;
+
+begin
+
+    if not ST_Initialized then
+    begin
+        ST_Initialized := True;
+
+        ST_Ready := False;
+        ST_Error := False;
+        ST_Blocked := False;
+
+        ST_SignalState := 0;
+
+        ST_StateValid := False;
+        ST_StateApproved := False;
+
+        ST_DecisionAllowed := False;
+        ST_EntryAllowed := False;
+        ST_ExecutionAllowed := False;
+
+        ST_State := 0;
+    end;
+
+    if SignalBridgeStateEnabled then
+    begin
+
+        ST_Error := False;
+        ST_Blocked := False;
+
+        ST_StateValid := False;
+        ST_StateApproved := False;
+
+        if ST_SignalState >= ST_MinState then
+        begin
+            if ST_SignalState <= ST_MaxState then
+            begin
+                ST_StateValid := True;
+            end;
+        end;
+
+        if ST_StateValid then
+        begin
+            ST_StateApproved := True;
+
+            ST_DecisionAllowed := True;
+            ST_EntryAllowed := True;
+
+            ST_Blocked := False;
+            ST_State := 1;
+        end
+        else
+        begin
+            ST_StateApproved := False;
+
+            ST_DecisionAllowed := False;
+            ST_EntryAllowed := False;
+
+            ST_Error := True;
+            ST_Blocked := True;
+            ST_State := 2;
+        end;
+
+        ST_Ready := True;
+
+        ST_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ST_Ready := False;
+        ST_Blocked := True;
+
+        ST_StateApproved := False;
+
+        ST_DecisionAllowed := False;
+        ST_EntryAllowed := False;
+        ST_ExecutionAllowed := False;
+
+        ST_State := 2;
+    end;
+
+    if SignalBridgeStateDebug then
+    begin
+        Plot(ST_State);
+    end;
+
+end;
