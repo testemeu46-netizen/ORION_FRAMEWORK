@@ -1,1 +1,146 @@
+const
+    ORION_SIGNALDATABRIDGE_VERSION_MAJOR = 1;
+    ORION_SIGNALDATABRIDGE_VERSION_MINOR = 0;
+    ORION_SIGNALDATABRIDGE_VERSION_PATCH = 0;
+    ORION_SIGNALDATABRIDGE_VERSION_BUILD = 1;
 
+input
+    SignalDataBridgeEnabled(True);
+    SignalDataBridgeDebug(False);
+
+    SB_MinScore(0);
+    SB_MaxScore(100);
+
+var
+    SB_Initialized : Boolean;
+    SB_Ready : Boolean;
+    SB_Error : Boolean;
+    SB_Blocked : Boolean;
+
+    SB_Direction : Integer;
+    SB_Score : Float;
+    SB_State : Integer;
+
+    SB_DirectionValid : Boolean;
+    SB_ScoreValid : Boolean;
+    SB_StateValid : Boolean;
+
+    SB_DataValid : Boolean;
+    SB_BridgeReady : Boolean;
+
+    SB_DecisionAllowed : Boolean;
+    SB_ExecutionAllowed : Boolean;
+
+    SB_Generation : Integer;
+
+begin
+
+    if not SB_Initialized then
+    begin
+        SB_Initialized := True;
+
+        SB_Ready := False;
+        SB_Error := False;
+        SB_Blocked := False;
+
+        SB_Direction := 0;
+        SB_Score := 0;
+        SB_State := 0;
+
+        SB_DirectionValid := False;
+        SB_ScoreValid := False;
+        SB_StateValid := False;
+
+        SB_DataValid := False;
+        SB_BridgeReady := False;
+
+        SB_DecisionAllowed := False;
+        SB_ExecutionAllowed := False;
+
+        SB_Generation := 0;
+    end;
+
+    if SignalDataBridgeEnabled then
+    begin
+
+        SB_Error := False;
+        SB_Blocked := False;
+
+        SB_DirectionValid := False;
+        SB_ScoreValid := False;
+        SB_StateValid := False;
+        SB_DataValid := False;
+
+        if SB_Direction >= -1 then
+        begin
+            if SB_Direction <= 1 then
+            begin
+                SB_DirectionValid := True;
+            end;
+        end;
+
+        if SB_Score >= SB_MinScore then
+        begin
+            if SB_Score <= SB_MaxScore then
+            begin
+                SB_ScoreValid := True;
+            end;
+        end;
+
+        if SB_State >= 0 then
+        begin
+            if SB_State <= 2 then
+            begin
+                SB_StateValid := True;
+            end;
+        end;
+
+        if SB_DirectionValid then
+        begin
+            if SB_ScoreValid then
+            begin
+                if SB_StateValid then
+                begin
+                    SB_DataValid := True;
+                end;
+            end;
+        end;
+
+        if SB_DataValid then
+        begin
+            SB_BridgeReady := True;
+            SB_DecisionAllowed := True;
+            SB_Blocked := False;
+
+            SB_Generation := SB_Generation + 1;
+        end
+        else
+        begin
+            SB_BridgeReady := False;
+            SB_DecisionAllowed := False;
+
+            SB_Error := True;
+            SB_Blocked := True;
+        end;
+
+        SB_Ready := True;
+
+        SB_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SB_Ready := False;
+        SB_BridgeReady := False;
+        SB_Blocked := True;
+
+        SB_DecisionAllowed := False;
+        SB_ExecutionAllowed := False;
+    end;
+
+    if SignalDataBridgeDebug then
+    begin
+        Plot(SB_Generation);
+    end;
+
+end;
