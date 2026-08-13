@@ -1,1 +1,131 @@
+const
+    ORION_SIGNALBRIDGEDIRECTION_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEDIRECTION_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEDIRECTION_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEDIRECTION_VERSION_BUILD = 1;
 
+input
+    SignalBridgeDirectionEnabled(True);
+    SignalBridgeDirectionDebug(False);
+
+var
+    SD_Initialized : Boolean;
+    SD_Ready : Boolean;
+    SD_Error : Boolean;
+    SD_Blocked : Boolean;
+
+    SD_Direction : Integer;
+
+    SD_BuyValid : Boolean;
+    SD_SellValid : Boolean;
+    SD_DirectionValid : Boolean;
+    SD_DirectionApproved : Boolean;
+
+    SD_DecisionAllowed : Boolean;
+    SD_EntryAllowed : Boolean;
+    SD_ExecutionAllowed : Boolean;
+
+    SD_State : Integer;
+
+begin
+
+    if not SD_Initialized then
+    begin
+        SD_Initialized := True;
+
+        SD_Ready := False;
+        SD_Error := False;
+        SD_Blocked := False;
+
+        SD_Direction := 0;
+
+        SD_BuyValid := False;
+        SD_SellValid := False;
+        SD_DirectionValid := False;
+        SD_DirectionApproved := False;
+
+        SD_DecisionAllowed := False;
+        SD_EntryAllowed := False;
+        SD_ExecutionAllowed := False;
+
+        SD_State := 0;
+    end;
+
+    if SignalBridgeDirectionEnabled then
+    begin
+
+        SD_Error := False;
+        SD_Blocked := False;
+
+        SD_BuyValid := False;
+        SD_SellValid := False;
+        SD_DirectionValid := False;
+        SD_DirectionApproved := False;
+
+        if SD_Direction = 1 then
+        begin
+            SD_BuyValid := True;
+        end;
+
+        if SD_Direction = -1 then
+        begin
+            SD_SellValid := True;
+        end;
+
+        if SD_BuyValid then
+        begin
+            SD_DirectionValid := True;
+        end;
+
+        if SD_SellValid then
+        begin
+            SD_DirectionValid := True;
+        end;
+
+        if SD_DirectionValid then
+        begin
+            SD_DirectionApproved := True;
+
+            SD_DecisionAllowed := True;
+            SD_EntryAllowed := True;
+
+            SD_Blocked := False;
+            SD_State := 1;
+        end
+        else
+        begin
+            SD_DirectionApproved := False;
+
+            SD_DecisionAllowed := False;
+            SD_EntryAllowed := False;
+
+            SD_Error := True;
+            SD_Blocked := True;
+            SD_State := 2;
+        end;
+
+        SD_Ready := True;
+
+        SD_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SD_Ready := False;
+        SD_Blocked := True;
+
+        SD_DirectionApproved := False;
+
+        SD_DecisionAllowed := False;
+        SD_EntryAllowed := False;
+        SD_ExecutionAllowed := False;
+
+        SD_State := 2;
+    end;
+
+    if SignalBridgeDirectionDebug then
+    begin
+        Plot(SD_State);
+    end;
+
+end;
