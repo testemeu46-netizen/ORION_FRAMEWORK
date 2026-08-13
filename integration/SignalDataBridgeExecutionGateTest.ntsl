@@ -1,1 +1,133 @@
+const
+    ORION_SIGNALBRIDGEEXECUTIONGATE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEEXECUTIONGATE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEEXECUTIONGATE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEEXECUTIONGATE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeExecutionGateEnabled(True);
+    SignalBridgeExecutionGateDebug(False);
+
+var
+    EX_Initialized : Boolean;
+    EX_Ready : Boolean;
+    EX_Error : Boolean;
+    EX_Blocked : Boolean;
+
+    EX_DecisionApproved : Boolean;
+    EX_EntryApproved : Boolean;
+    EX_PermissionGranted : Boolean;
+    EX_DataValid : Boolean;
+    EX_Fresh : Boolean;
+    EX_IntegrityValid : Boolean;
+    EX_LockActive : Boolean;
+
+    EX_ExecutionApproved : Boolean;
+
+    EX_DecisionAllowed : Boolean;
+    EX_EntryAllowed : Boolean;
+    EX_ExecutionAllowed : Boolean;
+
+    EX_State : Integer;
+
+begin
+
+    if not EX_Initialized then
+    begin
+        EX_Initialized := True;
+
+        EX_Ready := False;
+        EX_Error := False;
+        EX_Blocked := False;
+
+        EX_DecisionApproved := True;
+        EX_EntryApproved := True;
+        EX_PermissionGranted := True;
+        EX_DataValid := True;
+        EX_Fresh := True;
+        EX_IntegrityValid := True;
+        EX_LockActive := False;
+
+        EX_ExecutionApproved := False;
+
+        EX_DecisionAllowed := False;
+        EX_EntryAllowed := False;
+        EX_ExecutionAllowed := False;
+
+        EX_State := 0;
+    end;
+
+    if SignalBridgeExecutionGateEnabled then
+    begin
+
+        EX_Error := False;
+        EX_Blocked := False;
+
+        EX_ExecutionApproved := False;
+
+        if EX_DecisionApproved then
+        begin
+            if EX_EntryApproved then
+            begin
+                if EX_PermissionGranted then
+                begin
+                    if EX_DataValid then
+                    begin
+                        if EX_Fresh then
+                        begin
+                            if EX_IntegrityValid then
+                            begin
+                                if not EX_LockActive then
+                                begin
+                                    EX_ExecutionApproved := True;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if EX_ExecutionApproved then
+        begin
+            EX_DecisionAllowed := True;
+            EX_EntryAllowed := True;
+
+            EX_Blocked := False;
+            EX_State := 1;
+        end
+        else
+        begin
+            EX_DecisionAllowed := False;
+            EX_EntryAllowed := False;
+
+            EX_Error := True;
+            EX_Blocked := True;
+            EX_State := 2;
+        end;
+
+        EX_Ready := True;
+
+        EX_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EX_Ready := False;
+        EX_Blocked := True;
+
+        EX_ExecutionApproved := False;
+
+        EX_DecisionAllowed := False;
+        EX_EntryAllowed := False;
+        EX_ExecutionAllowed := False;
+
+        EX_State := 2;
+    end;
+
+    if SignalBridgeExecutionGateDebug then
+    begin
+        Plot(EX_State);
+    end;
+
+end;
