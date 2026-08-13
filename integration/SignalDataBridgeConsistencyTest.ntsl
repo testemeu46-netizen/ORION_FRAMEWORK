@@ -1,1 +1,174 @@
+const
+    ORION_SIGNALBRIDGECONSISTENCY_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGECONSISTENCY_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGECONSISTENCY_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGECONSISTENCY_VERSION_BUILD = 1;
 
+input
+    SignalBridgeConsistencyEnabled(True);
+    SignalBridgeConsistencyDebug(False);
+
+    SC_MinScore(0);
+    SC_MaxScore(100);
+    SC_MinState(0);
+    SC_MaxState(2);
+
+var
+    SC_Initialized : Boolean;
+    SC_Ready : Boolean;
+    SC_Error : Boolean;
+    SC_Blocked : Boolean;
+
+    SC_Direction : Integer;
+    SC_Score : Float;
+    SC_StateValue : Integer;
+    SC_Generation : Integer;
+
+    SC_DirectionValid : Boolean;
+    SC_ScoreValid : Boolean;
+    SC_StateValid : Boolean;
+    SC_GenerationValid : Boolean;
+
+    SC_ConsistencyValid : Boolean;
+    SC_ConsistencyApproved : Boolean;
+
+    SC_DecisionAllowed : Boolean;
+    SC_EntryAllowed : Boolean;
+    SC_ExecutionAllowed : Boolean;
+
+    SC_State : Integer;
+
+begin
+
+    if not SC_Initialized then
+    begin
+        SC_Initialized := True;
+
+        SC_Ready := False;
+        SC_Error := False;
+        SC_Blocked := False;
+
+        SC_Direction := 0;
+        SC_Score := 0;
+        SC_StateValue := 0;
+        SC_Generation := 0;
+
+        SC_DirectionValid := False;
+        SC_ScoreValid := False;
+        SC_StateValid := False;
+        SC_GenerationValid := False;
+
+        SC_ConsistencyValid := False;
+        SC_ConsistencyApproved := False;
+
+        SC_DecisionAllowed := False;
+        SC_EntryAllowed := False;
+        SC_ExecutionAllowed := False;
+
+        SC_State := 0;
+    end;
+
+    if SignalBridgeConsistencyEnabled then
+    begin
+
+        SC_Error := False;
+        SC_Blocked := False;
+
+        SC_DirectionValid := False;
+        SC_ScoreValid := False;
+        SC_StateValid := False;
+        SC_GenerationValid := False;
+
+        SC_ConsistencyValid := False;
+        SC_ConsistencyApproved := False;
+
+        if SC_Direction >= -1 then
+        begin
+            if SC_Direction <= 1 then
+            begin
+                SC_DirectionValid := True;
+            end;
+        end;
+
+        if SC_Score >= SC_MinScore then
+        begin
+            if SC_Score <= SC_MaxScore then
+            begin
+                SC_ScoreValid := True;
+            end;
+        end;
+
+        if SC_StateValue >= SC_MinState then
+        begin
+            if SC_StateValue <= SC_MaxState then
+            begin
+                SC_StateValid := True;
+            end;
+        end;
+
+        if SC_Generation >= 0 then
+        begin
+            SC_GenerationValid := True;
+        end;
+
+        if SC_DirectionValid then
+        begin
+            if SC_ScoreValid then
+            begin
+                if SC_StateValid then
+                begin
+                    if SC_GenerationValid then
+                    begin
+                        SC_ConsistencyValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if SC_ConsistencyValid then
+        begin
+            SC_ConsistencyApproved := True;
+
+            SC_DecisionAllowed := True;
+            SC_EntryAllowed := True;
+
+            SC_Blocked := False;
+            SC_State := 1;
+        end
+        else
+        begin
+            SC_ConsistencyApproved := False;
+
+            SC_DecisionAllowed := False;
+            SC_EntryAllowed := False;
+
+            SC_Error := True;
+            SC_Blocked := True;
+            SC_State := 2;
+        end;
+
+        SC_Ready := True;
+
+        SC_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SC_Ready := False;
+        SC_Blocked := True;
+
+        SC_ConsistencyApproved := False;
+
+        SC_DecisionAllowed := False;
+        SC_EntryAllowed := False;
+        SC_ExecutionAllowed := False;
+
+        SC_State := 2;
+    end;
+
+    if SignalBridgeConsistencyDebug then
+    begin
+        Plot(SC_State);
+    end;
+
+end;
