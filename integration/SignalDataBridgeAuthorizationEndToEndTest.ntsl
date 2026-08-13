@@ -1,1 +1,158 @@
+const
+    ORION_SIGNALBRIDGEAUTHENDTOEND_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHENDTOEND_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHENDTOEND_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHENDTOEND_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationEndToEndEnabled(True);
+    SignalBridgeAuthorizationEndToEndDebug(False);
+
+var
+    E2E_Initialized : Boolean;
+    E2E_Ready : Boolean;
+    E2E_Error : Boolean;
+    E2E_Blocked : Boolean;
+
+    E2E_DataValid : Boolean;
+    E2E_Fresh : Boolean;
+    E2E_IntegrityValid : Boolean;
+    E2E_SequenceValid : Boolean;
+    E2E_PermissionGranted : Boolean;
+    E2E_DecisionApproved : Boolean;
+    E2E_EntryApproved : Boolean;
+    E2E_ChainApproved : Boolean;
+    E2E_SafetyApproved : Boolean;
+    E2E_Consistent : Boolean;
+    E2E_SnapshotValid : Boolean;
+    E2E_LockActive : Boolean;
+
+    E2E_FinalAuthorization : Boolean;
+
+    E2E_DecisionAllowed : Boolean;
+    E2E_EntryAllowed : Boolean;
+    E2E_ExecutionAllowed : Boolean;
+
+    E2E_State : Integer;
+
+begin
+
+    if not E2E_Initialized then
+    begin
+        E2E_Initialized := True;
+
+        E2E_Ready := False;
+        E2E_Error := False;
+        E2E_Blocked := False;
+
+        E2E_DataValid := True;
+        E2E_Fresh := True;
+        E2E_IntegrityValid := True;
+        E2E_SequenceValid := True;
+        E2E_PermissionGranted := True;
+        E2E_DecisionApproved := True;
+        E2E_EntryApproved := True;
+        E2E_ChainApproved := True;
+        E2E_SafetyApproved := True;
+        E2E_Consistent := True;
+        E2E_SnapshotValid := True;
+        E2E_LockActive := False;
+
+        E2E_FinalAuthorization := False;
+
+        E2E_DecisionAllowed := False;
+        E2E_EntryAllowed := False;
+        E2E_ExecutionAllowed := False;
+
+        E2E_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationEndToEndEnabled then
+    begin
+
+        E2E_Error := False;
+        E2E_Blocked := False;
+
+        E2E_FinalAuthorization := False;
+
+        if E2E_DataValid then
+        begin
+            if E2E_Fresh then
+            begin
+                if E2E_IntegrityValid then
+                begin
+                    if E2E_SequenceValid then
+                    begin
+                        if E2E_PermissionGranted then
+                        begin
+                            if E2E_DecisionApproved then
+                            begin
+                                if E2E_EntryApproved then
+                                begin
+                                    if E2E_ChainApproved then
+                                    begin
+                                        if E2E_SafetyApproved then
+                                        begin
+                                            if E2E_Consistent then
+                                            begin
+                                                if E2E_SnapshotValid then
+                                                begin
+                                                    if not E2E_LockActive then
+                                                    begin
+                                                        E2E_FinalAuthorization := True;
+                                                    end;
+                                                end;
+                                            end;
+                                        end;
+                                    end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if E2E_FinalAuthorization then
+        begin
+            E2E_DecisionAllowed := True;
+            E2E_EntryAllowed := True;
+
+            E2E_Blocked := False;
+            E2E_State := 1;
+        end
+        else
+        begin
+            E2E_DecisionAllowed := False;
+            E2E_EntryAllowed := False;
+
+            E2E_Error := True;
+            E2E_Blocked := True;
+            E2E_State := 2;
+        end;
+
+        E2E_Ready := True;
+
+        E2E_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        E2E_Ready := False;
+        E2E_Blocked := True;
+
+        E2E_FinalAuthorization := False;
+
+        E2E_DecisionAllowed := False;
+        E2E_EntryAllowed := False;
+        E2E_ExecutionAllowed := False;
+
+        E2E_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationEndToEndDebug then
+    begin
+        Plot(E2E_State);
+    end;
+
+end;
