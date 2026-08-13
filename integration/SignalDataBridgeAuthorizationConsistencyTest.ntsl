@@ -1,1 +1,130 @@
+const
+    ORION_SIGNALBRIDGEAUTHCONSISTENCY_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHCONSISTENCY_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHCONSISTENCY_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHCONSISTENCY_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationConsistencyEnabled(True);
+    SignalBridgeAuthorizationConsistencyDebug(False);
+
+var
+    ACN_Initialized : Boolean;
+    ACN_Ready : Boolean;
+    ACN_Error : Boolean;
+    ACN_Blocked : Boolean;
+
+    ACN_AuthorizationActive : Boolean;
+    ACN_AuthorizationFresh : Boolean;
+    ACN_IntegrityValid : Boolean;
+    ACN_SequenceValid : Boolean;
+    ACN_LockActive : Boolean;
+
+    ACN_ConsistencyValid : Boolean;
+    ACN_ConsistencyApproved : Boolean;
+
+    ACN_DecisionAllowed : Boolean;
+    ACN_EntryAllowed : Boolean;
+    ACN_ExecutionAllowed : Boolean;
+
+    ACN_State : Integer;
+
+begin
+
+    if not ACN_Initialized then
+    begin
+        ACN_Initialized := True;
+
+        ACN_Ready := False;
+        ACN_Error := False;
+        ACN_Blocked := False;
+
+        ACN_AuthorizationActive := True;
+        ACN_AuthorizationFresh := True;
+        ACN_IntegrityValid := True;
+        ACN_SequenceValid := True;
+        ACN_LockActive := False;
+
+        ACN_ConsistencyValid := False;
+        ACN_ConsistencyApproved := False;
+
+        ACN_DecisionAllowed := False;
+        ACN_EntryAllowed := False;
+        ACN_ExecutionAllowed := False;
+
+        ACN_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationConsistencyEnabled then
+    begin
+
+        ACN_Error := False;
+        ACN_Blocked := False;
+
+        ACN_ConsistencyValid := False;
+        ACN_ConsistencyApproved := False;
+
+        if ACN_AuthorizationActive then
+        begin
+            if ACN_AuthorizationFresh then
+            begin
+                if ACN_IntegrityValid then
+                begin
+                    if ACN_SequenceValid then
+                    begin
+                        if not ACN_LockActive then
+                        begin
+                            ACN_ConsistencyValid := True;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if ACN_ConsistencyValid then
+        begin
+            ACN_ConsistencyApproved := True;
+
+            ACN_DecisionAllowed := True;
+            ACN_EntryAllowed := True;
+
+            ACN_Blocked := False;
+            ACN_State := 1;
+        end
+        else
+        begin
+            ACN_ConsistencyApproved := False;
+
+            ACN_DecisionAllowed := False;
+            ACN_EntryAllowed := False;
+
+            ACN_Error := True;
+            ACN_Blocked := True;
+            ACN_State := 2;
+        end;
+
+        ACN_Ready := True;
+
+        ACN_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ACN_Ready := False;
+        ACN_Blocked := True;
+
+        ACN_ConsistencyApproved := False;
+
+        ACN_DecisionAllowed := False;
+        ACN_EntryAllowed := False;
+        ACN_ExecutionAllowed := False;
+
+        ACN_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationConsistencyDebug then
+    begin
+        Plot(ACN_State);
+    end;
+
+end;
