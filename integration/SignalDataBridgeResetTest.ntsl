@@ -1,1 +1,139 @@
+const
+    ORION_SIGNALBRIDGERESET_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGERESET_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGERESET_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGERESET_VERSION_BUILD = 1;
 
+input
+    SignalBridgeResetEnabled(True);
+    SignalBridgeResetDebug(False);
+
+var
+    SR_Initialized : Boolean;
+    SR_Ready : Boolean;
+    SR_Error : Boolean;
+    SR_Blocked : Boolean;
+
+    SR_Direction : Integer;
+    SR_Score : Float;
+    SR_StateValue : Integer;
+    SR_Generation : Integer;
+
+    SR_ResetRequested : Boolean;
+    SR_ResetPerformed : Boolean;
+    SR_ResetValid : Boolean;
+
+    SR_DecisionAllowed : Boolean;
+    SR_EntryAllowed : Boolean;
+    SR_ExecutionAllowed : Boolean;
+
+    SR_State : Integer;
+
+begin
+
+    if not SR_Initialized then
+    begin
+        SR_Initialized := True;
+
+        SR_Ready := False;
+        SR_Error := False;
+        SR_Blocked := False;
+
+        SR_Direction := 0;
+        SR_Score := 0;
+        SR_StateValue := 0;
+        SR_Generation := 0;
+
+        SR_ResetRequested := False;
+        SR_ResetPerformed := False;
+        SR_ResetValid := False;
+
+        SR_DecisionAllowed := False;
+        SR_EntryAllowed := False;
+        SR_ExecutionAllowed := False;
+
+        SR_State := 0;
+    end;
+
+    if SignalBridgeResetEnabled then
+    begin
+
+        SR_Error := False;
+        SR_Blocked := False;
+
+        SR_ResetPerformed := False;
+        SR_ResetValid := False;
+
+        if SR_ResetRequested then
+        begin
+            SR_Direction := 0;
+            SR_Score := 0;
+            SR_StateValue := 0;
+            SR_Generation := 0;
+
+            SR_ResetPerformed := True;
+        end
+        else
+        begin
+            SR_ResetPerformed := True;
+        end;
+
+        if SR_Direction = 0 then
+        begin
+            if SR_Score = 0 then
+            begin
+                if SR_StateValue = 0 then
+                begin
+                    if SR_Generation = 0 then
+                    begin
+                        SR_ResetValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if SR_ResetValid then
+        begin
+            SR_DecisionAllowed := False;
+            SR_EntryAllowed := False;
+
+            SR_Blocked := True;
+
+            SR_State := 1;
+        end
+        else
+        begin
+            SR_Error := True;
+            SR_Blocked := True;
+
+            SR_DecisionAllowed := False;
+            SR_EntryAllowed := False;
+
+            SR_State := 2;
+        end;
+
+        SR_Ready := True;
+
+        SR_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SR_Ready := False;
+        SR_Blocked := True;
+
+        SR_ResetValid := False;
+
+        SR_DecisionAllowed := False;
+        SR_EntryAllowed := False;
+        SR_ExecutionAllowed := False;
+
+        SR_State := 2;
+    end;
+
+    if SignalBridgeResetDebug then
+    begin
+        Plot(SR_State);
+    end;
+
+end;
