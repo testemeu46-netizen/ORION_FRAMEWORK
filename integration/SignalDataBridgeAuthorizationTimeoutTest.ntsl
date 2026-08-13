@@ -1,1 +1,134 @@
+const
+    ORION_SIGNALBRIDGEAUTHTIMEOUT_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHTIMEOUT_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHTIMEOUT_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHTIMEOUT_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationTimeoutEnabled(True);
+    SignalBridgeAuthorizationTimeoutDebug(False);
+
+    AT_MaxAge(100);
+
+var
+    AT_Initialized : Boolean;
+    AT_Ready : Boolean;
+    AT_Error : Boolean;
+    AT_Blocked : Boolean;
+
+    AT_AuthorizationActive : Boolean;
+    AT_AuthorizationAge : Integer;
+
+    AT_AuthorizationValid : Boolean;
+    AT_TimeoutDetected : Boolean;
+    AT_TimeoutApproved : Boolean;
+
+    AT_DecisionAllowed : Boolean;
+    AT_EntryAllowed : Boolean;
+    AT_ExecutionAllowed : Boolean;
+
+    AT_State : Integer;
+
+begin
+
+    if not AT_Initialized then
+    begin
+        AT_Initialized := True;
+
+        AT_Ready := False;
+        AT_Error := False;
+        AT_Blocked := False;
+
+        AT_AuthorizationActive := True;
+        AT_AuthorizationAge := 0;
+
+        AT_AuthorizationValid := False;
+        AT_TimeoutDetected := False;
+        AT_TimeoutApproved := False;
+
+        AT_DecisionAllowed := False;
+        AT_EntryAllowed := False;
+        AT_ExecutionAllowed := False;
+
+        AT_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationTimeoutEnabled then
+    begin
+
+        AT_Error := False;
+        AT_Blocked := False;
+
+        AT_AuthorizationValid := False;
+        AT_TimeoutDetected := False;
+        AT_TimeoutApproved := False;
+
+        if AT_AuthorizationActive then
+        begin
+            if AT_AuthorizationAge <= AT_MaxAge then
+            begin
+                AT_AuthorizationValid := True;
+            end
+            else
+            begin
+                AT_TimeoutDetected := True;
+            end;
+        end;
+
+        if AT_TimeoutDetected then
+        begin
+            AT_AuthorizationActive := False;
+            AT_TimeoutApproved := True;
+
+            AT_DecisionAllowed := False;
+            AT_EntryAllowed := False;
+            AT_ExecutionAllowed := False;
+
+            AT_Blocked := True;
+            AT_State := 2;
+        end
+        else
+        begin
+            if AT_AuthorizationValid then
+            begin
+                AT_DecisionAllowed := True;
+                AT_EntryAllowed := True;
+
+                AT_Blocked := False;
+                AT_State := 1;
+            end
+            else
+            begin
+                AT_DecisionAllowed := False;
+                AT_EntryAllowed := False;
+
+                AT_Blocked := True;
+                AT_State := 2;
+            end;
+
+            AT_ExecutionAllowed := False;
+        end;
+
+        AT_Ready := True;
+
+    end
+    else
+    begin
+        AT_Ready := False;
+        AT_Blocked := True;
+
+        AT_AuthorizationActive := False;
+
+        AT_DecisionAllowed := False;
+        AT_EntryAllowed := False;
+        AT_ExecutionAllowed := False;
+
+        AT_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationTimeoutDebug then
+    begin
+        Plot(AT_State);
+    end;
+
+end;
