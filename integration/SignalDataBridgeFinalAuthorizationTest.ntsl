@@ -1,1 +1,148 @@
+const
+    ORION_SIGNALBRIDGEFINALAUTH_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEFINALAUTH_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEFINALAUTH_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEFINALAUTH_VERSION_BUILD = 1;
 
+input
+    SignalBridgeFinalAuthorizationEnabled(True);
+    SignalBridgeFinalAuthorizationDebug(False);
+
+var
+    FA_Initialized : Boolean;
+    FA_Ready : Boolean;
+    FA_Error : Boolean;
+    FA_Blocked : Boolean;
+
+    FA_DataValid : Boolean;
+    FA_Fresh : Boolean;
+    FA_IntegrityValid : Boolean;
+    FA_SequenceValid : Boolean;
+    FA_PermissionGranted : Boolean;
+    FA_DecisionApproved : Boolean;
+    FA_EntryApproved : Boolean;
+    FA_ChainApproved : Boolean;
+    FA_SafetyApproved : Boolean;
+    FA_LockActive : Boolean;
+
+    FA_FinalAuthorization : Boolean;
+
+    FA_DecisionAllowed : Boolean;
+    FA_EntryAllowed : Boolean;
+    FA_ExecutionAllowed : Boolean;
+
+    FA_State : Integer;
+
+begin
+
+    if not FA_Initialized then
+    begin
+        FA_Initialized := True;
+
+        FA_Ready := False;
+        FA_Error := False;
+        FA_Blocked := False;
+
+        FA_DataValid := True;
+        FA_Fresh := True;
+        FA_IntegrityValid := True;
+        FA_SequenceValid := True;
+        FA_PermissionGranted := True;
+        FA_DecisionApproved := True;
+        FA_EntryApproved := True;
+        FA_ChainApproved := True;
+        FA_SafetyApproved := True;
+        FA_LockActive := False;
+
+        FA_FinalAuthorization := False;
+
+        FA_DecisionAllowed := False;
+        FA_EntryAllowed := False;
+        FA_ExecutionAllowed := False;
+
+        FA_State := 0;
+    end;
+
+    if SignalBridgeFinalAuthorizationEnabled then
+    begin
+
+        FA_Error := False;
+        FA_Blocked := False;
+
+        FA_FinalAuthorization := False;
+
+        if FA_DataValid then
+        begin
+            if FA_Fresh then
+            begin
+                if FA_IntegrityValid then
+                begin
+                    if FA_SequenceValid then
+                    begin
+                        if FA_PermissionGranted then
+                        begin
+                            if FA_DecisionApproved then
+                            begin
+                                if FA_EntryApproved then
+                                begin
+                                    if FA_ChainApproved then
+                                    begin
+                                        if FA_SafetyApproved then
+                                        begin
+                                            if not FA_LockActive then
+                                            begin
+                                                FA_FinalAuthorization := True;
+                                            end;
+                                        end;
+                                    end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if FA_FinalAuthorization then
+        begin
+            FA_DecisionAllowed := True;
+            FA_EntryAllowed := True;
+
+            FA_Blocked := False;
+            FA_State := 1;
+        end
+        else
+        begin
+            FA_DecisionAllowed := False;
+            FA_EntryAllowed := False;
+
+            FA_Error := True;
+            FA_Blocked := True;
+            FA_State := 2;
+        end;
+
+        FA_Ready := True;
+
+        FA_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        FA_Ready := False;
+        FA_Blocked := True;
+
+        FA_FinalAuthorization := False;
+
+        FA_DecisionAllowed := False;
+        FA_EntryAllowed := False;
+        FA_ExecutionAllowed := False;
+
+        FA_State := 2;
+    end;
+
+    if SignalBridgeFinalAuthorizationDebug then
+    begin
+        Plot(FA_State);
+    end;
+
+end;
