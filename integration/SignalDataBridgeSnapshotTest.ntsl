@@ -1,1 +1,174 @@
+const
+    ORION_SIGNALBRIDGESNAPSHOT_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGESNAPSHOT_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGESNAPSHOT_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGESNAPSHOT_VERSION_BUILD = 1;
 
+input
+    SignalBridgeSnapshotEnabled(True);
+    SignalBridgeSnapshotDebug(False);
+
+    SP_MinScore(0);
+    SP_MaxScore(100);
+    SP_MinState(0);
+    SP_MaxState(2);
+
+var
+    SP_Initialized : Boolean;
+    SP_Ready : Boolean;
+    SP_Error : Boolean;
+    SP_Blocked : Boolean;
+
+    SP_Direction : Integer;
+    SP_Score : Float;
+    SP_StateValue : Integer;
+    SP_Generation : Integer;
+
+    SP_DirectionValid : Boolean;
+    SP_ScoreValid : Boolean;
+    SP_StateValid : Boolean;
+    SP_GenerationValid : Boolean;
+
+    SP_SnapshotValid : Boolean;
+    SP_SnapshotApproved : Boolean;
+
+    SP_DecisionAllowed : Boolean;
+    SP_EntryAllowed : Boolean;
+    SP_ExecutionAllowed : Boolean;
+
+    SP_State : Integer;
+
+begin
+
+    if not SP_Initialized then
+    begin
+        SP_Initialized := True;
+
+        SP_Ready := False;
+        SP_Error := False;
+        SP_Blocked := False;
+
+        SP_Direction := 0;
+        SP_Score := 0;
+        SP_StateValue := 0;
+        SP_Generation := 0;
+
+        SP_DirectionValid := False;
+        SP_ScoreValid := False;
+        SP_StateValid := False;
+        SP_GenerationValid := False;
+
+        SP_SnapshotValid := False;
+        SP_SnapshotApproved := False;
+
+        SP_DecisionAllowed := False;
+        SP_EntryAllowed := False;
+        SP_ExecutionAllowed := False;
+
+        SP_State := 0;
+    end;
+
+    if SignalBridgeSnapshotEnabled then
+    begin
+
+        SP_Error := False;
+        SP_Blocked := False;
+
+        SP_DirectionValid := False;
+        SP_ScoreValid := False;
+        SP_StateValid := False;
+        SP_GenerationValid := False;
+
+        SP_SnapshotValid := False;
+        SP_SnapshotApproved := False;
+
+        if SP_Direction >= -1 then
+        begin
+            if SP_Direction <= 1 then
+            begin
+                SP_DirectionValid := True;
+            end;
+        end;
+
+        if SP_Score >= SP_MinScore then
+        begin
+            if SP_Score <= SP_MaxScore then
+            begin
+                SP_ScoreValid := True;
+            end;
+        end;
+
+        if SP_StateValue >= SP_MinState then
+        begin
+            if SP_StateValue <= SP_MaxState then
+            begin
+                SP_StateValid := True;
+            end;
+        end;
+
+        if SP_Generation >= 0 then
+        begin
+            SP_GenerationValid := True;
+        end;
+
+        if SP_DirectionValid then
+        begin
+            if SP_ScoreValid then
+            begin
+                if SP_StateValid then
+                begin
+                    if SP_GenerationValid then
+                    begin
+                        SP_SnapshotValid := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if SP_SnapshotValid then
+        begin
+            SP_SnapshotApproved := True;
+
+            SP_DecisionAllowed := True;
+            SP_EntryAllowed := True;
+
+            SP_Blocked := False;
+            SP_State := 1;
+        end
+        else
+        begin
+            SP_SnapshotApproved := False;
+
+            SP_DecisionAllowed := False;
+            SP_EntryAllowed := False;
+
+            SP_Error := True;
+            SP_Blocked := True;
+            SP_State := 2;
+        end;
+
+        SP_Ready := True;
+
+        SP_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SP_Ready := False;
+        SP_Blocked := True;
+
+        SP_SnapshotApproved := False;
+
+        SP_DecisionAllowed := False;
+        SP_EntryAllowed := False;
+        SP_ExecutionAllowed := False;
+
+        SP_State := 2;
+    end;
+
+    if SignalBridgeSnapshotDebug then
+    begin
+        Plot(SP_State);
+    end;
+
+end;
