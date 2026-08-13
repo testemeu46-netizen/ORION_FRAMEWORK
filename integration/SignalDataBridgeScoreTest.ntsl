@@ -1,1 +1,116 @@
+const
+    ORION_SIGNALBRIDGESCORE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGESCORE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGESCORE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGESCORE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeScoreEnabled(True);
+    SignalBridgeScoreDebug(False);
+
+    SS_MinScore(0);
+    SS_MaxScore(100);
+
+var
+    SS_Initialized : Boolean;
+    SS_Ready : Boolean;
+    SS_Error : Boolean;
+    SS_Blocked : Boolean;
+
+    SS_Score : Float;
+
+    SS_ScoreValid : Boolean;
+    SS_ScoreApproved : Boolean;
+
+    SS_DecisionAllowed : Boolean;
+    SS_EntryAllowed : Boolean;
+    SS_ExecutionAllowed : Boolean;
+
+    SS_State : Integer;
+
+begin
+
+    if not SS_Initialized then
+    begin
+        SS_Initialized := True;
+
+        SS_Ready := False;
+        SS_Error := False;
+        SS_Blocked := False;
+
+        SS_Score := 0;
+
+        SS_ScoreValid := False;
+        SS_ScoreApproved := False;
+
+        SS_DecisionAllowed := False;
+        SS_EntryAllowed := False;
+        SS_ExecutionAllowed := False;
+
+        SS_State := 0;
+    end;
+
+    if SignalBridgeScoreEnabled then
+    begin
+
+        SS_Error := False;
+        SS_Blocked := False;
+
+        SS_ScoreValid := False;
+        SS_ScoreApproved := False;
+
+        if SS_Score >= SS_MinScore then
+        begin
+            if SS_Score <= SS_MaxScore then
+            begin
+                SS_ScoreValid := True;
+            end;
+        end;
+
+        if SS_ScoreValid then
+        begin
+            SS_ScoreApproved := True;
+
+            SS_DecisionAllowed := True;
+            SS_EntryAllowed := True;
+
+            SS_Blocked := False;
+            SS_State := 1;
+        end
+        else
+        begin
+            SS_ScoreApproved := False;
+
+            SS_DecisionAllowed := False;
+            SS_EntryAllowed := False;
+
+            SS_Error := True;
+            SS_Blocked := True;
+            SS_State := 2;
+        end;
+
+        SS_Ready := True;
+
+        SS_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SS_Ready := False;
+        SS_Blocked := True;
+
+        SS_ScoreApproved := False;
+
+        SS_DecisionAllowed := False;
+        SS_EntryAllowed := False;
+        SS_ExecutionAllowed := False;
+
+        SS_State := 2;
+    end;
+
+    if SignalBridgeScoreDebug then
+    begin
+        Plot(SS_State);
+    end;
+
+end;
