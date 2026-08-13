@@ -1,1 +1,118 @@
+const
+    ORION_SIGNALBRIDGEAUTHRECOVERY_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHRECOVERY_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHRECOVERY_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHRECOVERY_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationRecoveryEnabled(True);
+    SignalBridgeAuthorizationRecoveryDebug(False);
+
+var
+    AC_Initialized : Boolean;
+    AC_Ready : Boolean;
+    AC_Error : Boolean;
+    AC_Blocked : Boolean;
+
+    AC_AuthorizationActive : Boolean;
+    AC_AuthorizationRevoked : Boolean;
+    AC_RecoveryRequested : Boolean;
+    AC_RecoveryValid : Boolean;
+    AC_RecoveryApproved : Boolean;
+
+    AC_DecisionAllowed : Boolean;
+    AC_EntryAllowed : Boolean;
+    AC_ExecutionAllowed : Boolean;
+
+    AC_State : Integer;
+
+begin
+
+    if not AC_Initialized then
+    begin
+        AC_Initialized := True;
+
+        AC_Ready := False;
+        AC_Error := False;
+        AC_Blocked := False;
+
+        AC_AuthorizationActive := False;
+        AC_AuthorizationRevoked := True;
+        AC_RecoveryRequested := False;
+        AC_RecoveryValid := False;
+        AC_RecoveryApproved := False;
+
+        AC_DecisionAllowed := False;
+        AC_EntryAllowed := False;
+        AC_ExecutionAllowed := False;
+
+        AC_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationRecoveryEnabled then
+    begin
+
+        AC_Error := False;
+        AC_Blocked := False;
+
+        AC_RecoveryValid := False;
+        AC_RecoveryApproved := False;
+
+        if AC_RecoveryRequested then
+        begin
+            if AC_AuthorizationRevoked then
+            begin
+                AC_RecoveryValid := True;
+            end;
+        end;
+
+        if AC_RecoveryValid then
+        begin
+            AC_RecoveryApproved := True;
+
+            AC_AuthorizationRevoked := False;
+            AC_AuthorizationActive := True;
+
+            AC_DecisionAllowed := True;
+            AC_EntryAllowed := True;
+
+            AC_Blocked := False;
+            AC_State := 1;
+        end
+        else
+        begin
+            AC_AuthorizationActive := False;
+
+            AC_DecisionAllowed := False;
+            AC_EntryAllowed := False;
+
+            AC_Blocked := True;
+            AC_State := 2;
+        end;
+
+        AC_Ready := True;
+
+        AC_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AC_Ready := False;
+        AC_Blocked := True;
+
+        AC_AuthorizationActive := False;
+        AC_RecoveryApproved := False;
+
+        AC_DecisionAllowed := False;
+        AC_EntryAllowed := False;
+        AC_ExecutionAllowed := False;
+
+        AC_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationRecoveryDebug then
+    begin
+        Plot(AC_State);
+    end;
+
+end;
