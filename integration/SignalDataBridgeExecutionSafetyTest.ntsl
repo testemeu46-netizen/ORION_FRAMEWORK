@@ -1,1 +1,115 @@
+const
+    ORION_SIGNALBRIDGEEXECUTIONSAFETY_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEEXECUTIONSAFETY_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEEXECUTIONSAFETY_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEEXECUTIONSAFETY_VERSION_BUILD = 1;
 
+input
+    SignalBridgeExecutionSafetyEnabled(True);
+    SignalBridgeExecutionSafetyDebug(False);
+
+var
+    ES_Initialized : Boolean;
+    ES_Ready : Boolean;
+    ES_Error : Boolean;
+    ES_Blocked : Boolean;
+
+    ES_ChainApproved : Boolean;
+    ES_SafetyApproved : Boolean;
+    ES_SafetyLock : Boolean;
+
+    ES_DecisionAllowed : Boolean;
+    ES_EntryAllowed : Boolean;
+    ES_ExecutionAllowed : Boolean;
+
+    ES_State : Integer;
+
+begin
+
+    if not ES_Initialized then
+    begin
+        ES_Initialized := True;
+
+        ES_Ready := False;
+        ES_Error := False;
+        ES_Blocked := False;
+
+        ES_ChainApproved := True;
+        ES_SafetyApproved := True;
+        ES_SafetyLock := False;
+
+        ES_DecisionAllowed := False;
+        ES_EntryAllowed := False;
+        ES_ExecutionAllowed := False;
+
+        ES_State := 0;
+    end;
+
+    if SignalBridgeExecutionSafetyEnabled then
+    begin
+
+        ES_Error := False;
+        ES_Blocked := False;
+
+        if ES_ChainApproved then
+        begin
+            if ES_SafetyApproved then
+            begin
+                if not ES_SafetyLock then
+                begin
+                    ES_DecisionAllowed := True;
+                    ES_EntryAllowed := True;
+
+                    ES_Blocked := False;
+                    ES_State := 1;
+                end
+                else
+                begin
+                    ES_DecisionAllowed := False;
+                    ES_EntryAllowed := False;
+
+                    ES_Blocked := True;
+                    ES_State := 2;
+                end;
+            end
+            else
+            begin
+                ES_DecisionAllowed := False;
+                ES_EntryAllowed := False;
+
+                ES_Blocked := True;
+                ES_State := 2;
+            end;
+        end
+        else
+        begin
+            ES_DecisionAllowed := False;
+            ES_EntryAllowed := False;
+
+            ES_Blocked := True;
+            ES_State := 2;
+        end;
+
+        ES_Ready := True;
+
+        ES_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ES_Ready := False;
+        ES_Blocked := True;
+
+        ES_DecisionAllowed := False;
+        ES_EntryAllowed := False;
+        ES_ExecutionAllowed := False;
+
+        ES_State := 2;
+    end;
+
+    if SignalBridgeExecutionSafetyDebug then
+    begin
+        Plot(ES_State);
+    end;
+
+end;
