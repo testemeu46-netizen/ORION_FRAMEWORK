@@ -1,1 +1,113 @@
+const
+    ORION_SIGNALBRIDGEAUTHINTEGRITY_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHINTEGRITY_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHINTEGRITY_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHINTEGRITY_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationIntegrityEnabled(True);
+    SignalBridgeAuthorizationIntegrityDebug(False);
+
+var
+    AI_Initialized : Boolean;
+    AI_Ready : Boolean;
+    AI_Error : Boolean;
+    AI_Blocked : Boolean;
+
+    AI_AuthorizationActive : Boolean;
+    AI_AuthorizationFresh : Boolean;
+    AI_IntegrityValid : Boolean;
+
+    AI_IntegrityApproved : Boolean;
+
+    AI_DecisionAllowed : Boolean;
+    AI_EntryAllowed : Boolean;
+    AI_ExecutionAllowed : Boolean;
+
+    AI_State : Integer;
+
+begin
+
+    if not AI_Initialized then
+    begin
+        AI_Initialized := True;
+
+        AI_Ready := False;
+        AI_Error := False;
+        AI_Blocked := False;
+
+        AI_AuthorizationActive := True;
+        AI_AuthorizationFresh := True;
+        AI_IntegrityValid := True;
+
+        AI_IntegrityApproved := False;
+
+        AI_DecisionAllowed := False;
+        AI_EntryAllowed := False;
+        AI_ExecutionAllowed := False;
+
+        AI_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationIntegrityEnabled then
+    begin
+
+        AI_Error := False;
+        AI_Blocked := False;
+
+        AI_IntegrityApproved := False;
+
+        if AI_AuthorizationActive then
+        begin
+            if AI_AuthorizationFresh then
+            begin
+                if AI_IntegrityValid then
+                begin
+                    AI_IntegrityApproved := True;
+                end;
+            end;
+        end;
+
+        if AI_IntegrityApproved then
+        begin
+            AI_DecisionAllowed := True;
+            AI_EntryAllowed := True;
+
+            AI_Blocked := False;
+            AI_State := 1;
+        end
+        else
+        begin
+            AI_DecisionAllowed := False;
+            AI_EntryAllowed := False;
+
+            AI_Error := True;
+            AI_Blocked := True;
+            AI_State := 2;
+        end;
+
+        AI_Ready := True;
+
+        AI_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AI_Ready := False;
+        AI_Blocked := True;
+
+        AI_IntegrityApproved := False;
+
+        AI_DecisionAllowed := False;
+        AI_EntryAllowed := False;
+        AI_ExecutionAllowed := False;
+
+        AI_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationIntegrityDebug then
+    begin
+        Plot(AI_State);
+    end;
+
+end;
