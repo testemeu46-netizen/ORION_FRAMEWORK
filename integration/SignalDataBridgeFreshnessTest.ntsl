@@ -1,1 +1,145 @@
+const
+    ORION_SIGNALBRIDGEFRESHNESS_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEFRESHNESS_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEFRESHNESS_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEFRESHNESS_VERSION_BUILD = 1;
 
+input
+    SignalBridgeFreshnessEnabled(True);
+    SignalBridgeFreshnessDebug(False);
+
+var
+    SF_Initialized : Boolean;
+    SF_Ready : Boolean;
+    SF_Error : Boolean;
+    SF_Blocked : Boolean;
+
+    SF_CurrentBar : Integer;
+    SF_DataBar : Integer;
+
+    SF_CurrentCycle : Integer;
+    SF_DataCycle : Integer;
+
+    SF_Fresh : Boolean;
+    SF_BarValid : Boolean;
+    SF_CycleValid : Boolean;
+
+    SF_FreshnessValid : Boolean;
+    SF_FreshnessApproved : Boolean;
+
+    SF_DecisionAllowed : Boolean;
+    SF_ExecutionAllowed : Boolean;
+
+    SF_State : Integer;
+
+begin
+
+    if not SF_Initialized then
+    begin
+        SF_Initialized := True;
+
+        SF_Ready := False;
+        SF_Error := False;
+        SF_Blocked := False;
+
+        SF_CurrentBar := CurrentBar;
+        SF_DataBar := CurrentBar;
+
+        SF_CurrentCycle := 0;
+        SF_DataCycle := 0;
+
+        SF_Fresh := False;
+        SF_BarValid := False;
+        SF_CycleValid := False;
+
+        SF_FreshnessValid := False;
+        SF_FreshnessApproved := False;
+
+        SF_DecisionAllowed := False;
+        SF_ExecutionAllowed := False;
+
+        SF_State := 0;
+    end;
+
+    SF_CurrentBar := CurrentBar;
+
+    if SignalBridgeFreshnessEnabled then
+    begin
+
+        SF_Error := False;
+        SF_Blocked := False;
+
+        SF_Fresh := False;
+        SF_BarValid := False;
+        SF_CycleValid := False;
+
+        SF_FreshnessValid := False;
+        SF_FreshnessApproved := False;
+
+        if SF_DataBar = SF_CurrentBar then
+        begin
+            SF_BarValid := True;
+        end;
+
+        if SF_DataCycle = SF_CurrentCycle then
+        begin
+            SF_CycleValid := True;
+        end;
+
+        if SF_BarValid then
+        begin
+            if SF_CycleValid then
+            begin
+                SF_Fresh := True;
+            end;
+        end;
+
+        if SF_Fresh then
+        begin
+            SF_FreshnessValid := True;
+        end;
+
+        if SF_FreshnessValid then
+        begin
+            SF_FreshnessApproved := True;
+            SF_DecisionAllowed := True;
+            SF_Blocked := False;
+
+            SF_State := 1;
+        end
+        else
+        begin
+            SF_FreshnessApproved := False;
+            SF_DecisionAllowed := False;
+
+            SF_Error := True;
+            SF_Blocked := True;
+
+            SF_State := 2;
+        end;
+
+        SF_Ready := True;
+
+        SF_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        SF_Ready := False;
+        SF_Blocked := True;
+
+        SF_FreshnessValid := False;
+        SF_FreshnessApproved := False;
+
+        SF_DecisionAllowed := False;
+        SF_ExecutionAllowed := False;
+
+        SF_State := 2;
+    end;
+
+    if SignalBridgeFreshnessDebug then
+    begin
+        Plot(SF_State);
+    end;
+
+end;
