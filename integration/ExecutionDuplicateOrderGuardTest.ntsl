@@ -1,1 +1,139 @@
+const
+    ORION_EXECUTIONDUPLICATE_VERSION_MAJOR = 1;
+    ORION_EXECUTIONDUPLICATE_VERSION_MINOR = 0;
+    ORION_EXECUTIONDUPLICATE_VERSION_PATCH = 0;
+    ORION_EXECUTIONDUPLICATE_VERSION_BUILD = 1;
 
+input
+    ExecutionDuplicateGuardEnabled(True);
+    ExecutionDuplicateGuardDebug(False);
+
+var
+    ED_Initialized : Boolean;
+    ED_Ready : Boolean;
+    ED_Error : Boolean;
+    ED_Blocked : Boolean;
+
+    ED_CurrentBar : Integer;
+    ED_LastBar : Integer;
+
+    ED_OrderId : Integer;
+    ED_LastOrderId : Integer;
+
+    ED_NewOrder : Boolean;
+    ED_Duplicate : Boolean;
+    ED_OrderValid : Boolean;
+
+    ED_DecisionAllowed : Boolean;
+    ED_EntryAllowed : Boolean;
+    ED_OrderApproved : Boolean;
+    ED_ExecutionAllowed : Boolean;
+
+    ED_State : Integer;
+
+begin
+
+    if not ED_Initialized then
+    begin
+        ED_Initialized := True;
+
+        ED_Ready := False;
+        ED_Error := False;
+        ED_Blocked := False;
+
+        ED_CurrentBar := CurrentBar;
+        ED_LastBar := CurrentBar;
+
+        ED_OrderId := 0;
+        ED_LastOrderId := -1;
+
+        ED_NewOrder := False;
+        ED_Duplicate := False;
+        ED_OrderValid := False;
+
+        ED_DecisionAllowed := False;
+        ED_EntryAllowed := False;
+        ED_OrderApproved := False;
+        ED_ExecutionAllowed := False;
+
+        ED_State := 0;
+    end;
+
+    ED_CurrentBar := CurrentBar;
+
+    if ExecutionDuplicateGuardEnabled then
+    begin
+
+        ED_Error := False;
+        ED_Blocked := False;
+
+        ED_NewOrder := False;
+        ED_Duplicate := False;
+        ED_OrderValid := False;
+
+        if ED_CurrentBar <> ED_LastBar then
+        begin
+            ED_LastBar := ED_CurrentBar;
+            ED_OrderId := ED_OrderId + 1;
+        end;
+
+        if ED_OrderId <> ED_LastOrderId then
+        begin
+            ED_NewOrder := True;
+            ED_OrderValid := True;
+        end
+        else
+        begin
+            ED_Duplicate := True;
+        end;
+
+        if ED_Duplicate then
+        begin
+            ED_Error := True;
+            ED_Blocked := True;
+
+            ED_DecisionAllowed := False;
+            ED_EntryAllowed := False;
+            ED_OrderApproved := False;
+            ED_ExecutionAllowed := False;
+
+            ED_State := 2;
+        end
+        else
+        begin
+            ED_Error := False;
+            ED_Blocked := False;
+
+            ED_DecisionAllowed := True;
+            ED_EntryAllowed := True;
+            ED_OrderApproved := True;
+
+            ED_LastOrderId := ED_OrderId;
+
+            ED_State := 1;
+
+            ED_ExecutionAllowed := False;
+        end;
+
+        ED_Ready := True;
+
+    end
+    else
+    begin
+        ED_Ready := False;
+        ED_Blocked := True;
+
+        ED_DecisionAllowed := False;
+        ED_EntryAllowed := False;
+        ED_OrderApproved := False;
+        ED_ExecutionAllowed := False;
+
+        ED_State := 2;
+    end;
+
+    if ExecutionDuplicateGuardDebug then
+    begin
+        Plot(ED_State);
+    end;
+
+end;
