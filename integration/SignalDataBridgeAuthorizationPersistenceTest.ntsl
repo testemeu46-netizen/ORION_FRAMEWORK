@@ -1,1 +1,129 @@
+const
+    ORION_SIGNALBRIDGEAUTHPERSIST_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHPERSIST_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHPERSIST_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHPERSIST_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationPersistenceEnabled(True);
+    SignalBridgeAuthorizationPersistenceDebug(False);
+
+var
+    AP_Initialized : Boolean;
+    AP_Ready : Boolean;
+    AP_Error : Boolean;
+    AP_Blocked : Boolean;
+
+    AP_CurrentAuthorization : Boolean;
+    AP_PreviousAuthorization : Boolean;
+
+    AP_StateValid : Boolean;
+    AP_PersistenceValid : Boolean;
+    AP_PersistenceApproved : Boolean;
+
+    AP_DecisionAllowed : Boolean;
+    AP_EntryAllowed : Boolean;
+    AP_ExecutionAllowed : Boolean;
+
+    AP_State : Integer;
+
+begin
+
+    if not AP_Initialized then
+    begin
+        AP_Initialized := True;
+
+        AP_Ready := False;
+        AP_Error := False;
+        AP_Blocked := False;
+
+        AP_CurrentAuthorization := True;
+        AP_PreviousAuthorization := True;
+
+        AP_StateValid := False;
+        AP_PersistenceValid := False;
+        AP_PersistenceApproved := False;
+
+        AP_DecisionAllowed := False;
+        AP_EntryAllowed := False;
+        AP_ExecutionAllowed := False;
+
+        AP_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationPersistenceEnabled then
+    begin
+
+        AP_Error := False;
+        AP_Blocked := False;
+
+        AP_StateValid := False;
+        AP_PersistenceValid := False;
+        AP_PersistenceApproved := False;
+
+        if AP_CurrentAuthorization then
+        begin
+            AP_StateValid := True;
+        end;
+
+        if AP_PreviousAuthorization then
+        begin
+            if AP_CurrentAuthorization then
+            begin
+                AP_PersistenceValid := True;
+            end;
+        end;
+
+        if AP_StateValid then
+        begin
+            if AP_PersistenceValid then
+            begin
+                AP_PersistenceApproved := True;
+            end;
+        end;
+
+        if AP_PersistenceApproved then
+        begin
+            AP_DecisionAllowed := True;
+            AP_EntryAllowed := True;
+
+            AP_Blocked := False;
+            AP_State := 1;
+        end
+        else
+        begin
+            AP_DecisionAllowed := False;
+            AP_EntryAllowed := False;
+
+            AP_Error := True;
+            AP_Blocked := True;
+            AP_State := 2;
+        end;
+
+        AP_PreviousAuthorization := AP_CurrentAuthorization;
+
+        AP_Ready := True;
+
+        AP_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AP_Ready := False;
+        AP_Blocked := True;
+
+        AP_PersistenceApproved := False;
+
+        AP_DecisionAllowed := False;
+        AP_EntryAllowed := False;
+        AP_ExecutionAllowed := False;
+
+        AP_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationPersistenceDebug then
+    begin
+        Plot(AP_State);
+    end;
+
+end;
