@@ -1,1 +1,162 @@
+const
+    ORION_EXECUTIONORDER_VERSION_MAJOR = 1;
+    ORION_EXECUTIONORDER_VERSION_MINOR = 0;
+    ORION_EXECUTIONORDER_VERSION_PATCH = 0;
+    ORION_EXECUTIONORDER_VERSION_BUILD = 1;
 
+input
+    ExecutionOrderGuardEnabled(True);
+    ExecutionOrderGuardDebug(False);
+
+    EO_MinContracts(1);
+    EO_MaxContracts(3);
+    EO_MinStopPoints(1);
+    EO_MinTargetPoints(1);
+
+var
+    EO_Initialized : Boolean;
+    EO_Ready : Boolean;
+    EO_Error : Boolean;
+    EO_Blocked : Boolean;
+
+    EO_Direction : Integer;
+    EO_Contracts : Integer;
+    EO_StopPoints : Float;
+    EO_TargetPoints : Float;
+
+    EO_DirectionValid : Boolean;
+    EO_ContractsValid : Boolean;
+    EO_StopValid : Boolean;
+    EO_TargetValid : Boolean;
+    EO_OrderValid : Boolean;
+
+    EO_DecisionAllowed : Boolean;
+    EO_EntryAllowed : Boolean;
+    EO_OrderApproved : Boolean;
+    EO_ExecutionAllowed : Boolean;
+
+    EO_State : Integer;
+
+begin
+
+    if not EO_Initialized then
+    begin
+        EO_Initialized := True;
+
+        EO_Ready := False;
+        EO_Error := False;
+        EO_Blocked := False;
+
+        EO_Direction := 0;
+        EO_Contracts := 0;
+        EO_StopPoints := 0;
+        EO_TargetPoints := 0;
+
+        EO_DirectionValid := False;
+        EO_ContractsValid := False;
+        EO_StopValid := False;
+        EO_TargetValid := False;
+        EO_OrderValid := False;
+
+        EO_DecisionAllowed := False;
+        EO_EntryAllowed := False;
+        EO_OrderApproved := False;
+        EO_ExecutionAllowed := False;
+
+        EO_State := 0;
+    end;
+
+    if ExecutionOrderGuardEnabled then
+    begin
+
+        EO_Error := False;
+        EO_Blocked := False;
+
+        EO_DirectionValid := False;
+        EO_ContractsValid := False;
+        EO_StopValid := False;
+        EO_TargetValid := False;
+        EO_OrderValid := False;
+
+        if EO_Direction >= -1 then
+        begin
+            if EO_Direction <= 1 then
+            begin
+                if EO_Direction <> 0 then
+                begin
+                    EO_DirectionValid := True;
+                end;
+            end;
+        end;
+
+        if EO_Contracts >= EO_MinContracts then
+        begin
+            if EO_Contracts <= EO_MaxContracts then
+            begin
+                EO_ContractsValid := True;
+            end;
+        end;
+
+        if EO_StopPoints >= EO_MinStopPoints then
+        begin
+            EO_StopValid := True;
+        end;
+
+        if EO_TargetPoints >= EO_MinTargetPoints then
+        begin
+            EO_TargetValid := True;
+        end;
+
+        if EO_DirectionValid and EO_ContractsValid then
+        begin
+            if EO_StopValid and EO_TargetValid then
+            begin
+                EO_OrderValid := True;
+            end;
+        end;
+
+        if EO_OrderValid then
+        begin
+            EO_DecisionAllowed := True;
+            EO_EntryAllowed := True;
+            EO_OrderApproved := True;
+            EO_Blocked := False;
+
+            EO_State := 1;
+        end
+        else
+        begin
+            EO_Error := True;
+            EO_Blocked := True;
+
+            EO_DecisionAllowed := False;
+            EO_EntryAllowed := False;
+            EO_OrderApproved := False;
+
+            EO_State := 2;
+        end;
+
+        EO_Ready := True;
+
+        EO_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EO_Ready := False;
+        EO_Blocked := True;
+
+        EO_DecisionAllowed := False;
+        EO_EntryAllowed := False;
+        EO_OrderApproved := False;
+        EO_ExecutionAllowed := False;
+
+        EO_State := 2;
+    end;
+
+    if ExecutionOrderGuardDebug then
+    begin
+        Plot(EO_State);
+    end;
+
+end;
