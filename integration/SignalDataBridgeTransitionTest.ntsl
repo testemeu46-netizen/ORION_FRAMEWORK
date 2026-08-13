@@ -1,1 +1,166 @@
+const
+    ORION_SIGNALBRIDGETRANSITION_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGETRANSITION_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGETRANSITION_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGETRANSITION_VERSION_BUILD = 1;
 
+input
+    SignalBridgeTransitionEnabled(True);
+    SignalBridgeTransitionDebug(False);
+
+    ST_MinState(0);
+    ST_MaxState(2);
+
+var
+    TR_Initialized : Boolean;
+    TR_Ready : Boolean;
+    TR_Error : Boolean;
+    TR_Blocked : Boolean;
+
+    TR_PreviousState : Integer;
+    TR_CurrentState : Integer;
+
+    TR_PreviousValid : Boolean;
+    TR_CurrentValid : Boolean;
+
+    TR_TransitionDetected : Boolean;
+    TR_TransitionValid : Boolean;
+    TR_TransitionApproved : Boolean;
+
+    TR_DecisionAllowed : Boolean;
+    TR_EntryAllowed : Boolean;
+    TR_ExecutionAllowed : Boolean;
+
+    TR_State : Integer;
+
+begin
+
+    if not TR_Initialized then
+    begin
+        TR_Initialized := True;
+
+        TR_Ready := False;
+        TR_Error := False;
+        TR_Blocked := False;
+
+        TR_PreviousState := 0;
+        TR_CurrentState := 0;
+
+        TR_PreviousValid := False;
+        TR_CurrentValid := False;
+
+        TR_TransitionDetected := False;
+        TR_TransitionValid := False;
+        TR_TransitionApproved := False;
+
+        TR_DecisionAllowed := False;
+        TR_EntryAllowed := False;
+        TR_ExecutionAllowed := False;
+
+        TR_State := 0;
+    end;
+
+    if SignalBridgeTransitionEnabled then
+    begin
+
+        TR_Error := False;
+        TR_Blocked := False;
+
+        TR_PreviousValid := False;
+        TR_CurrentValid := False;
+
+        TR_TransitionDetected := False;
+        TR_TransitionValid := False;
+        TR_TransitionApproved := False;
+
+        if TR_PreviousState >= ST_MinState then
+        begin
+            if TR_PreviousState <= ST_MaxState then
+            begin
+                TR_PreviousValid := True;
+            end;
+        end;
+
+        if TR_CurrentState >= ST_MinState then
+        begin
+            if TR_CurrentState <= ST_MaxState then
+            begin
+                TR_CurrentValid := True;
+            end;
+        end;
+
+        if TR_PreviousValid then
+        begin
+            if TR_CurrentValid then
+            begin
+                if TR_CurrentState <> TR_PreviousState then
+                begin
+                    TR_TransitionDetected := True;
+                end;
+            end;
+        end;
+
+        if TR_TransitionDetected then
+        begin
+            TR_TransitionValid := True;
+        end
+        else
+        begin
+            if TR_PreviousValid then
+            begin
+                if TR_CurrentValid then
+                begin
+                    TR_TransitionValid := True;
+                end;
+            end;
+        end;
+
+        if TR_TransitionValid then
+        begin
+            TR_TransitionApproved := True;
+
+            TR_DecisionAllowed := True;
+            TR_EntryAllowed := True;
+
+            TR_PreviousState := TR_CurrentState;
+
+            TR_Blocked := False;
+            TR_State := 1;
+        end
+        else
+        begin
+            TR_TransitionApproved := False;
+
+            TR_DecisionAllowed := False;
+            TR_EntryAllowed := False;
+
+            TR_Error := True;
+            TR_Blocked := True;
+            TR_State := 2;
+        end;
+
+        TR_Ready := True;
+
+        TR_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        TR_Ready := False;
+        TR_Blocked := True;
+
+        TR_TransitionApproved := False;
+
+        TR_DecisionAllowed := False;
+        TR_EntryAllowed := False;
+        TR_ExecutionAllowed := False;
+
+        TR_State := 2;
+    end;
+
+    if SignalBridgeTransitionDebug then
+    begin
+        Plot(TR_State);
+    end;
+
+end;
