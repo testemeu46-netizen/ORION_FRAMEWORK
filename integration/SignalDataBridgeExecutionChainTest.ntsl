@@ -1,1 +1,140 @@
+const
+    ORION_SIGNALBRIDGEEXECUTIONCHAIN_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEEXECUTIONCHAIN_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEEXECUTIONCHAIN_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEEXECUTIONCHAIN_VERSION_BUILD = 1;
 
+input
+    SignalBridgeExecutionChainEnabled(True);
+    SignalBridgeExecutionChainDebug(False);
+
+var
+    EC_Initialized : Boolean;
+    EC_Ready : Boolean;
+    EC_Error : Boolean;
+    EC_Blocked : Boolean;
+
+    EC_DataValid : Boolean;
+    EC_Fresh : Boolean;
+    EC_IntegrityValid : Boolean;
+    EC_PermissionGranted : Boolean;
+    EC_DecisionApproved : Boolean;
+    EC_EntryApproved : Boolean;
+    EC_LockActive : Boolean;
+
+    EC_ChainValid : Boolean;
+    EC_ChainApproved : Boolean;
+
+    EC_DecisionAllowed : Boolean;
+    EC_EntryAllowed : Boolean;
+    EC_ExecutionAllowed : Boolean;
+
+    EC_State : Integer;
+
+begin
+
+    if not EC_Initialized then
+    begin
+        EC_Initialized := True;
+
+        EC_Ready := False;
+        EC_Error := False;
+        EC_Blocked := False;
+
+        EC_DataValid := True;
+        EC_Fresh := True;
+        EC_IntegrityValid := True;
+        EC_PermissionGranted := True;
+        EC_DecisionApproved := True;
+        EC_EntryApproved := True;
+        EC_LockActive := False;
+
+        EC_ChainValid := False;
+        EC_ChainApproved := False;
+
+        EC_DecisionAllowed := False;
+        EC_EntryAllowed := False;
+        EC_ExecutionAllowed := False;
+
+        EC_State := 0;
+    end;
+
+    if SignalBridgeExecutionChainEnabled then
+    begin
+
+        EC_Error := False;
+        EC_Blocked := False;
+
+        EC_ChainValid := False;
+        EC_ChainApproved := False;
+
+        if EC_DataValid then
+        begin
+            if EC_Fresh then
+            begin
+                if EC_IntegrityValid then
+                begin
+                    if EC_PermissionGranted then
+                    begin
+                        if EC_DecisionApproved then
+                        begin
+                            if EC_EntryApproved then
+                            begin
+                                if not EC_LockActive then
+                                begin
+                                    EC_ChainValid := True;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if EC_ChainValid then
+        begin
+            EC_ChainApproved := True;
+
+            EC_DecisionAllowed := True;
+            EC_EntryAllowed := True;
+
+            EC_Blocked := False;
+            EC_State := 1;
+        end
+        else
+        begin
+            EC_ChainApproved := False;
+
+            EC_DecisionAllowed := False;
+            EC_EntryAllowed := False;
+
+            EC_Error := True;
+            EC_Blocked := True;
+            EC_State := 2;
+        end;
+
+        EC_Ready := True;
+
+        EC_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        EC_Ready := False;
+        EC_Blocked := True;
+
+        EC_ChainApproved := False;
+
+        EC_DecisionAllowed := False;
+        EC_EntryAllowed := False;
+        EC_ExecutionAllowed := False;
+
+        EC_State := 2;
+    end;
+
+    if SignalBridgeExecutionChainDebug then
+    begin
+        Plot(EC_State);
+    end;
+
+end;
