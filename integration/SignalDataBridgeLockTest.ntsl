@@ -1,1 +1,102 @@
+const
+    ORION_SIGNALBRIDGELOCK_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGELOCK_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGELOCK_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGELOCK_VERSION_BUILD = 1;
 
+input
+    SignalBridgeLockEnabled(True);
+    SignalBridgeLockDebug(False);
+
+var
+    SL_Initialized : Boolean;
+    SL_Ready : Boolean;
+    SL_Error : Boolean;
+    SL_Blocked : Boolean;
+
+    SL_LockRequested : Boolean;
+    SL_LockActive : Boolean;
+
+    SL_DecisionAllowed : Boolean;
+    SL_EntryAllowed : Boolean;
+    SL_ExecutionAllowed : Boolean;
+
+    SL_State : Integer;
+
+begin
+
+    if not SL_Initialized then
+    begin
+        SL_Initialized := True;
+
+        SL_Ready := False;
+        SL_Error := False;
+        SL_Blocked := False;
+
+        SL_LockRequested := False;
+        SL_LockActive := False;
+
+        SL_DecisionAllowed := False;
+        SL_EntryAllowed := False;
+        SL_ExecutionAllowed := False;
+
+        SL_State := 0;
+    end;
+
+    if SignalBridgeLockEnabled then
+    begin
+
+        SL_Error := False;
+        SL_Blocked := False;
+
+        SL_LockActive := False;
+
+        if SL_LockRequested then
+        begin
+            SL_LockActive := True;
+        end;
+
+        if SL_LockActive then
+        begin
+            SL_Blocked := True;
+
+            SL_DecisionAllowed := False;
+            SL_EntryAllowed := False;
+            SL_ExecutionAllowed := False;
+
+            SL_State := 2;
+        end
+        else
+        begin
+            SL_Blocked := False;
+
+            SL_DecisionAllowed := False;
+            SL_EntryAllowed := False;
+            SL_ExecutionAllowed := False;
+
+            SL_State := 1;
+        end;
+
+        SL_Ready := True;
+
+    end
+    else
+    begin
+        SL_Ready := False;
+        SL_Blocked := True;
+
+        SL_LockActive := True;
+
+        SL_DecisionAllowed := False;
+        SL_EntryAllowed := False;
+        SL_ExecutionAllowed := False;
+
+        SL_State := 2;
+    end;
+
+    if SignalBridgeLockDebug then
+    begin
+        Plot(SL_State);
+    end;
+
+end;
