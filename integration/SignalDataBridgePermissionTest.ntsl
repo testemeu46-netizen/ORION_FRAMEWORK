@@ -1,1 +1,118 @@
+const
+    ORION_SIGNALBRIDGEPERMISSION_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEPERMISSION_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEPERMISSION_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEPERMISSION_VERSION_BUILD = 1;
 
+input
+    SignalBridgePermissionEnabled(True);
+    SignalBridgePermissionDebug(False);
+
+var
+    PM_Initialized : Boolean;
+    PM_Ready : Boolean;
+    PM_Error : Boolean;
+    PM_Blocked : Boolean;
+
+    PM_DataValid : Boolean;
+    PM_Fresh : Boolean;
+    PM_IntegrityValid : Boolean;
+    PM_LockActive : Boolean;
+
+    PM_PermissionGranted : Boolean;
+
+    PM_DecisionAllowed : Boolean;
+    PM_EntryAllowed : Boolean;
+    PM_ExecutionAllowed : Boolean;
+
+    PM_State : Integer;
+
+begin
+
+    if not PM_Initialized then
+    begin
+        PM_Initialized := True;
+
+        PM_Ready := False;
+        PM_Error := False;
+        PM_Blocked := False;
+
+        PM_DataValid := True;
+        PM_Fresh := True;
+        PM_IntegrityValid := True;
+        PM_LockActive := False;
+
+        PM_PermissionGranted := False;
+
+        PM_DecisionAllowed := False;
+        PM_EntryAllowed := False;
+        PM_ExecutionAllowed := False;
+
+        PM_State := 0;
+    end;
+
+    if SignalBridgePermissionEnabled then
+    begin
+
+        PM_Error := False;
+        PM_Blocked := False;
+
+        PM_PermissionGranted := False;
+
+        if PM_DataValid then
+        begin
+            if PM_Fresh then
+            begin
+                if PM_IntegrityValid then
+                begin
+                    if not PM_LockActive then
+                    begin
+                        PM_PermissionGranted := True;
+                    end;
+                end;
+            end;
+        end;
+
+        if PM_PermissionGranted then
+        begin
+            PM_DecisionAllowed := True;
+            PM_EntryAllowed := True;
+
+            PM_Blocked := False;
+            PM_State := 1;
+        end
+        else
+        begin
+            PM_DecisionAllowed := False;
+            PM_EntryAllowed := False;
+
+            PM_Error := True;
+            PM_Blocked := True;
+            PM_State := 2;
+        end;
+
+        PM_Ready := True;
+
+        PM_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        PM_Ready := False;
+        PM_Blocked := True;
+
+        PM_PermissionGranted := False;
+
+        PM_DecisionAllowed := False;
+        PM_EntryAllowed := False;
+        PM_ExecutionAllowed := False;
+
+        PM_State := 2;
+    end;
+
+    if SignalBridgePermissionDebug then
+    begin
+        Plot(PM_State);
+    end;
+
+end;
