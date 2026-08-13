@@ -1,1 +1,140 @@
+const
+    ORION_SIGNALBRIDGEAUTHFINALSTATE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEAUTHFINALSTATE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEAUTHFINALSTATE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEAUTHFINALSTATE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeAuthorizationFinalStateEnabled(True);
+    SignalBridgeAuthorizationFinalStateDebug(False);
+
+var
+    AFS_Initialized : Boolean;
+    AFS_Ready : Boolean;
+    AFS_Error : Boolean;
+    AFS_Blocked : Boolean;
+
+    AFS_Active : Boolean;
+    AFS_Fresh : Boolean;
+    AFS_Integrity : Boolean;
+    AFS_Sequence : Boolean;
+    AFS_Consistent : Boolean;
+    AFS_Snapshot : Boolean;
+    AFS_Lock : Boolean;
+
+    AFS_FinalValid : Boolean;
+    AFS_FinalApproved : Boolean;
+
+    AFS_DecisionAllowed : Boolean;
+    AFS_EntryAllowed : Boolean;
+    AFS_ExecutionAllowed : Boolean;
+
+    AFS_State : Integer;
+
+begin
+
+    if not AFS_Initialized then
+    begin
+        AFS_Initialized := True;
+
+        AFS_Ready := False;
+        AFS_Error := False;
+        AFS_Blocked := False;
+
+        AFS_Active := True;
+        AFS_Fresh := True;
+        AFS_Integrity := True;
+        AFS_Sequence := True;
+        AFS_Consistent := True;
+        AFS_Snapshot := True;
+        AFS_Lock := False;
+
+        AFS_FinalValid := False;
+        AFS_FinalApproved := False;
+
+        AFS_DecisionAllowed := False;
+        AFS_EntryAllowed := False;
+        AFS_ExecutionAllowed := False;
+
+        AFS_State := 0;
+    end;
+
+    if SignalBridgeAuthorizationFinalStateEnabled then
+    begin
+
+        AFS_Error := False;
+        AFS_Blocked := False;
+
+        AFS_FinalValid := False;
+        AFS_FinalApproved := False;
+
+        if AFS_Active then
+        begin
+            if AFS_Fresh then
+            begin
+                if AFS_Integrity then
+                begin
+                    if AFS_Sequence then
+                    begin
+                        if AFS_Consistent then
+                        begin
+                            if AFS_Snapshot then
+                            begin
+                                if not AFS_Lock then
+                                begin
+                                    AFS_FinalValid := True;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+
+        if AFS_FinalValid then
+        begin
+            AFS_FinalApproved := True;
+
+            AFS_DecisionAllowed := True;
+            AFS_EntryAllowed := True;
+
+            AFS_Blocked := False;
+            AFS_State := 1;
+        end
+        else
+        begin
+            AFS_FinalApproved := False;
+
+            AFS_DecisionAllowed := False;
+            AFS_EntryAllowed := False;
+
+            AFS_Error := True;
+            AFS_Blocked := True;
+            AFS_State := 2;
+        end;
+
+        AFS_Ready := True;
+
+        AFS_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        AFS_Ready := False;
+        AFS_Blocked := True;
+
+        AFS_FinalApproved := False;
+
+        AFS_DecisionAllowed := False;
+        AFS_EntryAllowed := False;
+        AFS_ExecutionAllowed := False;
+
+        AFS_State := 2;
+    end;
+
+    if SignalBridgeAuthorizationFinalStateDebug then
+    begin
+        Plot(AFS_State);
+    end;
+
+end;
