@@ -1,1 +1,103 @@
+const
+    ORION_SIGNALBRIDGEFAILSAFE_VERSION_MAJOR = 1;
+    ORION_SIGNALBRIDGEFAILSAFE_VERSION_MINOR = 0;
+    ORION_SIGNALBRIDGEFAILSAFE_VERSION_PATCH = 0;
+    ORION_SIGNALBRIDGEFAILSAFE_VERSION_BUILD = 1;
 
+input
+    SignalBridgeFailSafeEnabled(True);
+    SignalBridgeFailSafeDebug(False);
+
+var
+    FS_Initialized : Boolean;
+    FS_Ready : Boolean;
+    FS_Error : Boolean;
+    FS_Blocked : Boolean;
+
+    FS_FaultDetected : Boolean;
+    FS_FailSafeActive : Boolean;
+
+    FS_DecisionAllowed : Boolean;
+    FS_EntryAllowed : Boolean;
+    FS_ExecutionAllowed : Boolean;
+
+    FS_State : Integer;
+
+begin
+
+    if not FS_Initialized then
+    begin
+        FS_Initialized := True;
+
+        FS_Ready := False;
+        FS_Error := False;
+        FS_Blocked := False;
+
+        FS_FaultDetected := False;
+        FS_FailSafeActive := False;
+
+        FS_DecisionAllowed := False;
+        FS_EntryAllowed := False;
+        FS_ExecutionAllowed := False;
+
+        FS_State := 0;
+    end;
+
+    if SignalBridgeFailSafeEnabled then
+    begin
+
+        FS_Error := False;
+        FS_Blocked := False;
+
+        FS_FailSafeActive := False;
+
+        if FS_FaultDetected then
+        begin
+            FS_FailSafeActive := True;
+        end;
+
+        if FS_FailSafeActive then
+        begin
+            FS_Error := True;
+            FS_Blocked := True;
+
+            FS_DecisionAllowed := False;
+            FS_EntryAllowed := False;
+            FS_ExecutionAllowed := False;
+
+            FS_State := 2;
+        end
+        else
+        begin
+            FS_Blocked := False;
+
+            FS_DecisionAllowed := False;
+            FS_EntryAllowed := False;
+            FS_ExecutionAllowed := False;
+
+            FS_State := 1;
+        end;
+
+        FS_Ready := True;
+
+    end
+    else
+    begin
+        FS_Ready := False;
+        FS_Blocked := True;
+
+        FS_FailSafeActive := True;
+
+        FS_DecisionAllowed := False;
+        FS_EntryAllowed := False;
+        FS_ExecutionAllowed := False;
+
+        FS_State := 2;
+    end;
+
+    if SignalBridgeFailSafeDebug then
+    begin
+        Plot(FS_State);
+    end;
+
+end;
