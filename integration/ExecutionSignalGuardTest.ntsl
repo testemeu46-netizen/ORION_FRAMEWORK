@@ -1,1 +1,149 @@
+const
+    ORION_EXECUTIONSIGNAL_VERSION_MAJOR = 1;
+    ORION_EXECUTIONSIGNAL_VERSION_MINOR = 0;
+    ORION_EXECUTIONSIGNAL_VERSION_PATCH = 0;
+    ORION_EXECUTIONSIGNAL_VERSION_BUILD = 1;
 
+input
+    ExecutionSignalGuardEnabled(True);
+    ExecutionSignalGuardDebug(False);
+
+    ES_MinScore(70);
+
+var
+    ESG_Initialized : Boolean;
+    ESG_Ready : Boolean;
+    ESG_Error : Boolean;
+    ESG_Blocked : Boolean;
+
+    ESG_Direction : Integer;
+    ESG_Score : Float;
+    ESG_SignalState : Integer;
+
+    ESG_DirectionValid : Boolean;
+    ESG_ScoreValid : Boolean;
+    ESG_StateValid : Boolean;
+    ESG_SignalValid : Boolean;
+
+    ESG_DecisionAllowed : Boolean;
+    ESG_EntryAllowed : Boolean;
+    ESG_OrderApproved : Boolean;
+    ESG_ExecutionAllowed : Boolean;
+
+    ESG_State : Integer;
+
+begin
+
+    if not ESG_Initialized then
+    begin
+        ESG_Initialized := True;
+
+        ESG_Ready := False;
+        ESG_Error := False;
+        ESG_Blocked := False;
+
+        ESG_Direction := 0;
+        ESG_Score := 0;
+        ESG_SignalState := 0;
+
+        ESG_DirectionValid := False;
+        ESG_ScoreValid := False;
+        ESG_StateValid := False;
+        ESG_SignalValid := False;
+
+        ESG_DecisionAllowed := False;
+        ESG_EntryAllowed := False;
+        ESG_OrderApproved := False;
+        ESG_ExecutionAllowed := False;
+
+        ESG_State := 0;
+    end;
+
+    if ExecutionSignalGuardEnabled then
+    begin
+
+        ESG_Error := False;
+        ESG_Blocked := False;
+
+        ESG_DirectionValid := False;
+        ESG_ScoreValid := False;
+        ESG_StateValid := False;
+        ESG_SignalValid := False;
+
+        if ESG_Direction >= -1 then
+        begin
+            if ESG_Direction <= 1 then
+            begin
+                if ESG_Direction <> 0 then
+                begin
+                    ESG_DirectionValid := True;
+                end;
+            end;
+        end;
+
+        if ESG_Score >= ES_MinScore then
+        begin
+            ESG_ScoreValid := True;
+        end;
+
+        if ESG_SignalState >= 1 then
+        begin
+            if ESG_SignalState <= 2 then
+            begin
+                ESG_StateValid := True;
+            end;
+        end;
+
+        if ESG_DirectionValid and ESG_ScoreValid then
+        begin
+            if ESG_StateValid then
+            begin
+                ESG_SignalValid := True;
+            end;
+        end;
+
+        if ESG_SignalValid then
+        begin
+            ESG_DecisionAllowed := True;
+            ESG_EntryAllowed := True;
+            ESG_OrderApproved := True;
+            ESG_Blocked := False;
+
+            ESG_State := 1;
+        end
+        else
+        begin
+            ESG_Error := True;
+            ESG_Blocked := True;
+
+            ESG_DecisionAllowed := False;
+            ESG_EntryAllowed := False;
+            ESG_OrderApproved := False;
+
+            ESG_State := 2;
+        end;
+
+        ESG_Ready := True;
+
+        ESG_ExecutionAllowed := False;
+
+    end
+    else
+    begin
+        ESG_Ready := False;
+        ESG_Blocked := True;
+
+        ESG_DecisionAllowed := False;
+        ESG_EntryAllowed := False;
+        ESG_OrderApproved := False;
+        ESG_ExecutionAllowed := False;
+
+        ESG_State := 2;
+    end;
+
+    if ExecutionSignalGuardDebug then
+    begin
+        Plot(ESG_State);
+    end;
+
+end;
